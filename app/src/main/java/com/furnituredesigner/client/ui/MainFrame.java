@@ -1,6 +1,7 @@
 package com.furnituredesigner.client.ui;
 
 import com.furnituredesigner.common.model.User;
+import com.furnituredesigner.App;
 
 import javax.swing.*;
 import java.awt.*;
@@ -93,6 +94,25 @@ public class MainFrame extends JFrame {
             setTitle("RoomForge - Admin Dashboard - " + currentUser.getFullName());
         } else {
             setTitle("RoomForge - Designer Dashboard - " + currentUser.getFullName());
+        }
+    }
+    
+    // Add logout method
+    public void logout() {
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to logout?",
+            "Confirm Logout",
+            JOptionPane.YES_NO_OPTION
+        );
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            dispose(); // Close this frame
+            
+            // Show login screen again
+            SwingUtilities.invokeLater(() -> {
+                App.showLoginScreen();
+            });
         }
     }
 }

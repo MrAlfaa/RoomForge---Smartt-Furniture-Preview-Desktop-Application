@@ -16,6 +16,8 @@ import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialLighterIJTheme;
 
 public class App {
+    private static JFrame loginFrame;
+    
     public static void main(String[] args) {
         System.out.println("Starting RoomForge Application...");
         
@@ -110,8 +112,14 @@ public class App {
         System.out.println("SuperAdmin setup screen displayed");
     }
     
-    private static void showLoginScreen() {
-        JFrame loginFrame = new JFrame("RoomForge - Login");
+    public static void showLoginScreen() {
+        if (loginFrame != null && loginFrame.isDisplayable()) {
+            loginFrame.setVisible(true);
+            loginFrame.toFront();
+            return;
+        }
+        
+        loginFrame = new JFrame("RoomForge - Login");
         loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         loginFrame.setSize(900, 600);
         loginFrame.setLocationRelativeTo(null);

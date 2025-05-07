@@ -11,6 +11,7 @@ public class AdminDashboardPanel extends JPanel {
     private User currentUser;
     private JPanel contentPanel;
     private CardLayout cardLayout;
+    private UserManagementPanel userManagementPanel;
     
     public AdminDashboardPanel(User user, ActionListener designerNavAction) {
         this.currentUser = user;
@@ -38,14 +39,17 @@ public class AdminDashboardPanel extends JPanel {
         
         // Create content panels
         JPanel dashboardContent = createDashboardContent();
-        JPanel usersContent = createUsersContent();
+        
+        // Create and add UserManagementPanel
+        userManagementPanel = new UserManagementPanel(currentUser);
+        
         JPanel projectsContent = createProjectsContent();
         JPanel reportsContent = createReportsContent();
         JPanel settingsContent = createSettingsContent();
         
         // Add content panels to the card layout
         contentPanel.add(dashboardContent, "dashboard");
-        contentPanel.add(usersContent, "users");
+        contentPanel.add(userManagementPanel, "users");
         contentPanel.add(projectsContent, "projects");
         contentPanel.add(reportsContent, "reports");
         contentPanel.add(settingsContent, "settings");
@@ -78,8 +82,11 @@ public class AdminDashboardPanel extends JPanel {
         JLabel userLabel = new JLabel(currentUser.getFullName() + " (" + currentUser.getRole() + ")");
         JButton logoutButton = new JButton("Logout");
         logoutButton.addActionListener(e -> {
-            // Handle logout (implementation not required yet)
-            JOptionPane.showMessageDialog(this, "Logout functionality will be implemented later");
+            // Call the logout method from the root frame
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window instanceof MainFrame) {
+                ((MainFrame) window).logout();
+            }
         });
         
         rightPanel.add(userLabel);

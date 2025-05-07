@@ -82,8 +82,11 @@ public class DesignerDashboardPanel extends JPanel {
         JLabel userLabel = new JLabel(currentUser.getFullName() + " (" + currentUser.getRole() + ")");
         JButton logoutButton = new JButton("Logout");
         logoutButton.addActionListener(e -> {
-            // Handle logout (implementation not required yet)
-            JOptionPane.showMessageDialog(this, "Logout functionality will be implemented later");
+            // Call the logout method from the root frame
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window instanceof MainFrame) {
+                ((MainFrame) window).logout();
+            }
         });
         
         rightPanel.add(userLabel);
