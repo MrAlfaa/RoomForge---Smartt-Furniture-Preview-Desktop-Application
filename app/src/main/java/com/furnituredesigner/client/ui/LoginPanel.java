@@ -6,6 +6,8 @@ import com.furnituredesigner.server.service.AuthService;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.sql.SQLException;
 import net.miginfocom.swing.MigLayout;
 
@@ -15,6 +17,10 @@ public class LoginPanel extends JPanel {
     private JPasswordField passwordField;
     private JButton loginButton;
     private LoginListener loginListener;
+    
+    // Add placeholder text constants
+    private static final String USERNAME_PLACEHOLDER = "Enter username";
+    private static final String PASSWORD_PLACEHOLDER = "Enter password";
     
     public interface LoginListener {
         void onLoginSuccess(User user);
@@ -71,8 +77,10 @@ public class LoginPanel extends JPanel {
         
         usernameField = new JTextField(20);
         usernameField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        // Use a standard icon from the UI Manager instead of FluentUI
         usernameField.setMargin(new Insets(5, 5, 5, 5));
+        
+        // Add placeholder functionality to username field
+        setupPlaceholder(usernameField, USERNAME_PLACEHOLDER);
         
         // Password field
         JLabel passwordLabel = new JLabel("Password");
@@ -82,6 +90,9 @@ public class LoginPanel extends JPanel {
         passwordField = new JPasswordField(20);
         passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         passwordField.setMargin(new Insets(5, 5, 5, 5));
+        
+        // Add placeholder functionality to password field
+        setupPasswordPlaceholder(passwordField, PASSWORD_PLACEHOLDER);
         
         // Remember me checkbox
         JCheckBox rememberMeCheckbox = new JCheckBox("Remember me");
@@ -119,14 +130,75 @@ public class LoginPanel extends JPanel {
         // Add action listeners
         loginButton.addActionListener(this::attemptLogin);
         
-        // Set default values for testing (can be removed for production)
-        usernameField.setText("admin");
-        passwordField.setText("admin123");
+        // Remove the default values that were set for testing
+        // usernameField.setText("admin");
+        // passwordField.setText("admin123");
+    }
+    
+    private void setupPlaceholder(JTextField textField, String placeholder) {
+        textField.setForeground(Color.GRAY);
+        textField.setText(placeholder);
+        
+        textField.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (textField.getText().equals(placeholder)) {
+                    textField.setText("");
+                    textField.setForeground(Color.BLACK);
+                }
+            }
+            
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (textField.getText().isEmpty()) {
+                    textField.setForeground(Color.GRAY);
+                    textField.setText(placeholder);
+                }
+            }
+        });
+    }
+    
+    private void setupPasswordPlaceholder(JPasswordField passwordField, String placeholder) {
+        // For password fields we need a different approach
+        passwordField.setEchoChar((char) 0); // Make the text visible initially
+        passwordField.setForeground(Color.GRAY);
+        passwordField.setText(placeholder);
+        
+        passwordField.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                String password = new String(passwordField.getPassword());
+                if (password.equals(placeholder)) {
+                    passwordField.setText("");
+                    passwordField.setEchoChar('•'); // Set echo char back to default bullet
+                    passwordField.setForeground(Color.BLACK);
+                }
+            }
+            
+            @Override
+            public void focusLost(FocusEvent e) {
+                String password = new String(passwordField.getPassword());
+                if (password.isEmpty()) {
+                    passwordField.setEchoChar((char) 0); // Turn off password hiding
+                    passwordField.setForeground(Color.GRAY);
+                    passwordField.setText(placeholder);
+                }
+            }
+        });
     }
     
     private void attemptLogin(ActionEvent e) {
+        // Get username, checking if it's not the placeholder
         String username = usernameField.getText();
+        if (username.equals(USERNAME_PLACEHOLDER)) {
+            username = "";
+        }
+        
+        // Get password, checking if it's not the placeholder
         String password = new String(passwordField.getPassword());
+        if (password.equals(PASSWORD_PLACEHOLDER)) {
+            password = "";
+        }
         
         if (username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
