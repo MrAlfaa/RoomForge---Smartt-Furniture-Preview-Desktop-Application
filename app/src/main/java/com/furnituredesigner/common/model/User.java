@@ -7,7 +7,7 @@ public class User implements Serializable {
     private String username;
     private String fullName;
     private String email;
-    private String role; // Added role field
+    private String role;
     
     public User(int id, String username, String fullName, String email, String role) {
         this.id = id;
@@ -38,8 +38,12 @@ public class User implements Serializable {
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     
+    public boolean isSuperAdmin() {
+        return "superadmin".equalsIgnoreCase(role);
+    }
+    
     public boolean isAdmin() {
-        return "admin".equalsIgnoreCase(role);
+        return "admin".equalsIgnoreCase(role) || isSuperAdmin();
     }
     
     public boolean isDesigner() {

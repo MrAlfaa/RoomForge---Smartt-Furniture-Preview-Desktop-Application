@@ -38,4 +38,20 @@ public class AuthService {
         
         return null; // Authentication failed
     }
+    
+    public boolean checkSuperAdminExists() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM users WHERE role = 'superadmin'";
+        
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        }
+        
+        return false;
+    }
 }

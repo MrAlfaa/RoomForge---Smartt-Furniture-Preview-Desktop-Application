@@ -24,17 +24,17 @@ public class AdminDashboardPanel extends JPanel {
         // Create and configure the navigation panel
         NavigationPanel navPanel = new NavigationPanel(contentPanel, cardLayout);
         
-        // Add menu items
-        navPanel.addMenuItem("Dashboard", "dashboard", "🏠");
-        navPanel.addMenuItem("Users", "users", "👥");
-        navPanel.addMenuItem("Projects", "projects", "📁");
-        navPanel.addMenuItem("Reports", "reports", "📊");
-        navPanel.addMenuItem("Settings", "settings", "⚙️");
+        // Add menu items with simple text icons instead of emoji
+        navPanel.addMenuItem("Dashboard", "dashboard", "D");
+        navPanel.addMenuItem("Users", "users", "U");
+        navPanel.addMenuItem("Projects", "projects", "P");
+        navPanel.addMenuItem("Reports", "reports", "R");
+        navPanel.addMenuItem("Settings", "settings", "S");
         
         navPanel.addSeparator();
         
         // Add navigation to designer dashboard
-        navPanel.addNavButton("Designer Dashboard", "🔄", designerNavAction);
+        navPanel.addNavButton("Designer Dashboard", "DD", designerNavAction);
         
         // Create content panels
         JPanel dashboardContent = createDashboardContent();

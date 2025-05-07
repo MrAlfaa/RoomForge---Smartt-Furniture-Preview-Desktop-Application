@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.sql.SQLException;
+import net.miginfocom.swing.MigLayout;
 
 public class LoginPanel extends JPanel {
     
@@ -25,40 +26,100 @@ public class LoginPanel extends JPanel {
     }
     
     private void setupUI() {
-        setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        setLayout(new BorderLayout());
         
-        JLabel titleLabel = new JLabel("Furniture Designer Login");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        titleLabel.setHorizontalAlignment(JLabel.CENTER);
+        // Create the main panel with MigLayout
+        JPanel mainPanel = new JPanel(new MigLayout("fill, insets 0", "[50%][50%]", "grow"));
+        mainPanel.setBackground(Color.WHITE);
         
-        JPanel formPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        // Left panel with logo and branding
+        JPanel leftPanel = new JPanel(new MigLayout("fill, insets 0", "grow", "grow"));
+        leftPanel.setBackground(new Color(41, 121, 255));
         
-        JLabel usernameLabel = new JLabel("Username:");
+        JPanel brandingPanel = new JPanel(new MigLayout("fill, insets 30", "", "[]20[]"));
+        brandingPanel.setOpaque(false);
+        
+        JLabel logoLabel = new JLabel("RoomForge");
+        logoLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
+        logoLabel.setForeground(Color.WHITE);
+        
+        JLabel taglineLabel = new JLabel("<html>Smart Furniture Preview<br>Design your space with confidence</html>");
+        taglineLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        taglineLabel.setForeground(new Color(220, 220, 220));
+        
+        brandingPanel.add(logoLabel, "wrap, center");
+        brandingPanel.add(taglineLabel, "center");
+        
+        leftPanel.add(brandingPanel, "center");
+        
+        // Right panel with login form
+        JPanel rightPanel = new JPanel(new MigLayout("fill, insets 40", "grow", "[]20[]20[]"));
+        rightPanel.setBackground(Color.WHITE);
+        
+        JLabel titleLabel = new JLabel("Login to Your Account");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(new Color(50, 50, 50));
+        
+        // Login form panel
+        JPanel formPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow]", "[]10[]10[]20[]"));
+        formPanel.setOpaque(false);
+        
+        // Username field
+        JLabel usernameLabel = new JLabel("Username");
+        usernameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        usernameLabel.setForeground(new Color(100, 100, 100));
+        
         usernameField = new JTextField(20);
+        usernameField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        // Use a standard icon from the UI Manager instead of FluentUI
+        usernameField.setMargin(new Insets(5, 5, 5, 5));
         
-        JLabel passwordLabel = new JLabel("Password:");
+        // Password field
+        JLabel passwordLabel = new JLabel("Password");
+        passwordLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        passwordLabel.setForeground(new Color(100, 100, 100));
+        
         passwordField = new JPasswordField(20);
+        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        passwordField.setMargin(new Insets(5, 5, 5, 5));
         
+        // Remember me checkbox
+        JCheckBox rememberMeCheckbox = new JCheckBox("Remember me");
+        rememberMeCheckbox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        rememberMeCheckbox.setForeground(new Color(100, 100, 100));
+        rememberMeCheckbox.setOpaque(false);
+        
+        // Login button
         loginButton = new JButton("Login");
-        JButton cancelButton = new JButton("Cancel");
+        loginButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        loginButton.setBackground(new Color(41, 121, 255));
+        loginButton.setForeground(Color.WHITE);
+        loginButton.setFocusPainted(false);
         
-        // Add components to panels
-        formPanel.add(usernameLabel);
-        formPanel.add(usernameField);
-        formPanel.add(passwordLabel);
-        formPanel.add(passwordField);
-        formPanel.add(cancelButton);
-        formPanel.add(loginButton);
+        // Add components to form panel
+        formPanel.add(usernameLabel, "wrap");
+        formPanel.add(usernameField, "growx, wrap");
+        formPanel.add(passwordLabel, "wrap");
+        formPanel.add(passwordField, "growx, wrap");
+        formPanel.add(rememberMeCheckbox, "split 2");
+        formPanel.add(new JLabel("<html><a href='#'>Forgot password?</a></html>"), "right, wrap");
+        formPanel.add(loginButton, "growx");
         
-        add(titleLabel, BorderLayout.NORTH);
-        add(formPanel, BorderLayout.CENTER);
+        // Add components to right panel
+        rightPanel.add(titleLabel, "wrap, center");
+        rightPanel.add(formPanel, "growx, wrap");
+        
+        // Add panels to main panel
+        mainPanel.add(leftPanel, "grow");
+        mainPanel.add(rightPanel, "grow");
+        
+        // Add main panel to this panel
+        add(mainPanel, BorderLayout.CENTER);
         
         // Add action listeners
         loginButton.addActionListener(this::attemptLogin);
-        cancelButton.addActionListener(e -> System.exit(0));
         
-        // Set default values for testing
+        // Set default values for testing (can be removed for production)
         usernameField.setText("admin");
         passwordField.setText("admin123");
     }
@@ -75,15 +136,11 @@ public class LoginPanel extends JPanel {
             return;
         }
         
-        // For quick testing - bypass authentication
-        if (true) { // Remove this after testing
-            User testUser = new User(1, username, "Test User", "test@example.com");
-            loginListener.onLoginSuccess(testUser);
-            return;
-        }
-        
         // Attempt to authenticate
         try {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            loginButton.setEnabled(false);
+            
             AuthService authService = new AuthService();
             User user = authService.authenticate(username, password);
             
@@ -97,13 +154,18 @@ public class LoginPanel extends JPanel {
                     "Invalid username or password", 
                     "Login Failed", 
                     JOptionPane.ERROR_MESSAGE);
+                loginButton.setEnabled(true);
             }
+            
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, 
                 "Login error: " + ex.getMessage(), 
                 "System Error", 
                 JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
+            loginButton.setEnabled(true);
+        } finally {
+            setCursor(Cursor.getDefaultCursor());
         }
     }
 }

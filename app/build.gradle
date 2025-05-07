@@ -6,10 +6,21 @@ plugins {
 repositories {
     mavenCentral()
     maven { url "https://jitpack.io" }
-    maven { url "https://jcenter.bintray.com" }
 }
 
 dependencies {
+    // UI Libraries
+    implementation 'com.formdev:flatlaf:3.1.1'
+    implementation 'com.formdev:flatlaf-extras:3.1.1'
+    implementation 'com.formdev:flatlaf-intellij-themes:3.1.1'
+    implementation 'com.miglayout:miglayout-swing:11.1'
+    
+    // Icons - using the correct versions
+    implementation 'org.kordamp.ikonli:ikonli-core:12.3.1'
+    implementation 'org.kordamp.ikonli:ikonli-swing:12.3.1'
+    implementation 'org.kordamp.ikonli:ikonli-materialdesign2-pack:12.3.1'
+    implementation 'org.kordamp.ikonli:ikonli-fontawesome5-pack:12.3.1'
+    
     // JMonkeyEngine core
     implementation 'org.jmonkeyengine:jme3-core:3.5.2-stable'
     implementation 'org.jmonkeyengine:jme3-desktop:3.5.2-stable'
@@ -26,6 +37,9 @@ dependencies {
     // Password hashing
     implementation 'org.mindrot:jbcrypt:0.4'
     
+    // Animation
+    implementation 'net.java.timingframework:timingframework-swing:7.3.1'
+    
     // Testing
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
@@ -33,6 +47,17 @@ dependencies {
 
 application {
     mainClass = 'com.furnituredesigner.App'
+}
+
+// Set source and target compatibility for Java
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+// Ensure Java files are compiled with UTF-8 encoding
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
 }
 
 run {

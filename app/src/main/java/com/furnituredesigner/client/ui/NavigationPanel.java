@@ -34,12 +34,12 @@ public class NavigationPanel extends JPanel {
         headerPanel.setPreferredSize(new Dimension(expandedWidth, 60));
         headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(70, 70, 70)));
         
-        JLabel titleLabel = new JLabel("Furniture Designer");
+        JLabel titleLabel = new JLabel("RoomForge");
         titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0));
         
-        collapseButton = new JButton("◀");
+        collapseButton = new JButton("◀");  // Using a simple unicode character
         collapseButton.setFocusPainted(false);
         collapseButton.setContentAreaFilled(false);
         collapseButton.setBorderPainted(false);
@@ -67,14 +67,16 @@ public class NavigationPanel extends JPanel {
         menuItem.setMaximumSize(new Dimension(expandedWidth, 50));
         menuItem.setBackground(new Color(50, 50, 50));
         
+        // Use text as simple icon for now
         JLabel iconLabel = new JLabel(iconText);
         iconLabel.setForeground(Color.WHITE);
         iconLabel.setHorizontalAlignment(JLabel.CENTER);
         iconLabel.setPreferredSize(new Dimension(50, 50));
-        iconLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        iconLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         
         JLabel titleLabel = new JLabel(title);
         titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
         
         menuItem.add(iconLabel, BorderLayout.WEST);
@@ -115,10 +117,11 @@ public class NavigationPanel extends JPanel {
         iconLabel.setForeground(Color.WHITE);
         iconLabel.setHorizontalAlignment(JLabel.CENTER);
         iconLabel.setPreferredSize(new Dimension(50, 50));
-        iconLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        iconLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         
         JLabel titleLabel = new JLabel(title);
         titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
         
         menuItem.add(iconLabel, BorderLayout.WEST);
@@ -165,7 +168,7 @@ public class NavigationPanel extends JPanel {
             for (JPanel menuItem : menuItems) {
                 Component[] components = menuItem.getComponents();
                 for (Component component : components) {
-                    if (component instanceof JLabel && !((JLabel) component).getText().matches(".[A-Z]")) {
+                    if (component instanceof JLabel && !((JLabel) component).getText().matches(".")) {
                         component.setVisible(false);
                     }
                 }
