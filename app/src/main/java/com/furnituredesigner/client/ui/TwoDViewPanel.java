@@ -104,6 +104,7 @@ public class TwoDViewPanel extends JPanel {
         JButton zoomOutButton = new JButton("-");
         JButton resetViewButton = new JButton("Reset View");
         JButton saveFurnitureButton = new JButton("Save Layout");
+        JButton threeDViewButton = new JButton("3D Preview");  // Add 3D Preview button
         
         zoomInButton.addActionListener(e -> {
             scale *= 1.2;
@@ -125,10 +126,16 @@ public class TwoDViewPanel extends JPanel {
             saveFurnitureLayout();
         });
         
+        // Add action listener for 3D Preview button
+        threeDViewButton.addActionListener(e -> {
+            showThreeDPreview();
+        });
+        
         controlPanel.add(zoomInButton);
         controlPanel.add(zoomOutButton);
         controlPanel.add(resetViewButton);
         controlPanel.add(saveFurnitureButton);
+        controlPanel.add(threeDViewButton);  // Add the button to the control panel
         
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(controlPanel, BorderLayout.EAST);
@@ -1033,5 +1040,36 @@ public class TwoDViewPanel extends JPanel {
         this.room = room;
         loadFurniture();
         repaint();
+    }
+    
+    private void showThreeDPreview() {
+        try {
+            // Save furniture layout before switching to 3D
+            saveFurnitureLayout();
+            
+            // Get parent container (should be the content panel in DesignerDashboardPanel)
+            Container parent = getParent();
+            if (parent != null && parent.getLayout() instanceof CardLayout) {
+                CardLayout layout = (CardLayout) parent.getLayout();
+                
+                // Create or update 3D panel
+                ThreeDViewPanel threeDPanel = new ThreeDViewPanel(room, furnitureList);
+                parent.add(threeDPanel, "3d-preview");
+                
+                // Show 3D view
+                layout.show(parent, "3d-preview");
+            } else {
+                JOptionPane.showMessageDialog(this, 
+                    "Unable to switch to 3D view", 
+                    "Navigation Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Error showing 3D preview: " + ex.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
     }
 }

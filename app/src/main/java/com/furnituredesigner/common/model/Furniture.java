@@ -8,6 +8,7 @@ public class Furniture {
     private String type; // Chair, Table, Sofa, etc.
     private double xPos;
     private double yPos;
+    private double zPos;
     private double width;
     private double length;
     private double height;
@@ -48,6 +49,9 @@ public class Furniture {
     public double getYPos() { return yPos; }
     public void setYPos(double yPos) { this.yPos = yPos; }
     
+    public double getZPos() { return zPos; }
+    public void setZPos(double zPos) { this.zPos = zPos; }
+    
     public double getWidth() { return width; }
     public void setWidth(double width) { this.width = width; }
     
@@ -72,8 +76,8 @@ public class Furniture {
         }
     }
     
-    // Create a clone of this furniture
-    public Furniture clone() {
-        return new Furniture(id, roomId, type, xPos, yPos, width, length, height, color, rotation);
+    @Override
+    public String toString() {
+        return type + " at (" + xPos + ", " + yPos + ")";
     }
 }

@@ -15,7 +15,7 @@ public class DesignerDashboardPanel extends JPanel {
     private JPanel contentPanel;
     private CardLayout cardLayout;
     
-    // Remove the adminNavAction parameter from constructor
+    // Constructor
     public DesignerDashboardPanel(User user) {
         this.currentUser = user;
         
@@ -32,20 +32,16 @@ public class DesignerDashboardPanel extends JPanel {
         navPanel.addMenuItem("Projects", "projects", "P");
         navPanel.addMenuItem("New Design", "new-design", "+");
         navPanel.addMenuItem("2D View", "2d-view", "2D");
+        navPanel.addMenuItem("3D View", "3d-preview", "3D");  // Add 3D View navigation item
         navPanel.addMenuItem("Materials", "materials", "M");
         navPanel.addMenuItem("Templates", "templates", "T");
         navPanel.addMenuItem("Settings", "settings", "S");
-        
-        // Remove the Admin Dashboard navigation button
-        // if (user.isAdmin()) {
-        //     navPanel.addSeparator();
-        //     navPanel.addNavButton("Admin Dashboard", "A", adminNavAction);
-        // }
         
         // Create content panels
         JPanel projectsContent = createProjectsContent();
         JPanel newDesignContent = createNewDesignContent();
         JPanel viewContent = create2DViewContent();
+        // We'll create the 3D view panel dynamically when needed
         JPanel materialsContent = createMaterialsContent();
         JPanel templatesContent = createTemplatesContent();
         JPanel settingsContent = createSettingsContent();
@@ -54,6 +50,7 @@ public class DesignerDashboardPanel extends JPanel {
         contentPanel.add(projectsContent, "projects");
         contentPanel.add(newDesignContent, "new-design");
         contentPanel.add(viewContent, "2d-view");
+        // 3D view will be added when a room is opened
         contentPanel.add(materialsContent, "materials");
         contentPanel.add(templatesContent, "templates");
         contentPanel.add(settingsContent, "settings");
@@ -700,6 +697,47 @@ public class DesignerDashboardPanel extends JPanel {
         
         panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(tabbedPane, BorderLayout.CENTER);
+        
+        return panel;
+    }
+    
+    // Add a placeholder 3D preview panel that will prompt the user to first create or load a room
+    private JPanel create3DPlaceholderPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        
+        JLabel titleLabel = new JLabel("3D Room Design View");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JPanel messagePanel = new JPanel(new GridBagLayout());
+        messagePanel.setBackground(new Color(245, 245, 245));
+        
+        JLabel messageLabel = new JLabel("Please create a new design or open an existing project to view in 3D");
+        messageLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        
+        JButton createNewButton = new JButton("Create New Design");
+        createNewButton.addActionListener(e -> cardLayout.show(contentPanel, "new-design"));
+        
+        JButton openProjectButton = new JButton("Open Projects");
+        openProjectButton.addActionListener(e -> cardLayout.show(contentPanel, "projects"));
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        messagePanel.add(messageLabel, gbc);
+        
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        messagePanel.add(createNewButton, gbc);
+        
+        gbc.gridx = 1;
+        messagePanel.add(openProjectButton, gbc);
+        
+        panel.add(titleLabel, BorderLayout.NORTH);
+        panel.add(messagePanel, BorderLayout.CENTER);
         
         return panel;
     }
