@@ -1,10 +1,13 @@
 package com.furnituredesigner.client.ui;
 
 import com.furnituredesigner.common.model.User;
+import com.furnituredesigner.common.model.Room;
+import com.furnituredesigner.server.service.RoomService;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
 
 public class DesignerDashboardPanel extends JPanel {
     
@@ -28,7 +31,7 @@ public class DesignerDashboardPanel extends JPanel {
         // Add menu items with simple text icons instead of emoji
         navPanel.addMenuItem("Projects", "projects", "P");
         navPanel.addMenuItem("New Design", "new-design", "+");
-        navPanel.addMenuItem("3D View", "3d-view", "3D");
+        navPanel.addMenuItem("2D View", "2d-view", "2D");
         navPanel.addMenuItem("Materials", "materials", "M");
         navPanel.addMenuItem("Templates", "templates", "T");
         navPanel.addMenuItem("Settings", "settings", "S");
@@ -42,7 +45,7 @@ public class DesignerDashboardPanel extends JPanel {
         // Create content panels
         JPanel projectsContent = createProjectsContent();
         JPanel newDesignContent = createNewDesignContent();
-        JPanel viewContent = create3DViewContent();
+        JPanel viewContent = create2DViewContent();
         JPanel materialsContent = createMaterialsContent();
         JPanel templatesContent = createTemplatesContent();
         JPanel settingsContent = createSettingsContent();
@@ -50,7 +53,7 @@ public class DesignerDashboardPanel extends JPanel {
         // Add content panels to the card layout
         contentPanel.add(projectsContent, "projects");
         contentPanel.add(newDesignContent, "new-design");
-        contentPanel.add(viewContent, "3d-view");
+        contentPanel.add(viewContent, "2d-view");
         contentPanel.add(materialsContent, "materials");
         contentPanel.add(templatesContent, "templates");
         contentPanel.add(settingsContent, "settings");
@@ -216,6 +219,7 @@ public class DesignerDashboardPanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
         
+        // Project Name field
         formPanel.add(new JLabel("Project Name:"), gbc);
         
         gbc.gridx = 1;
@@ -224,6 +228,7 @@ public class DesignerDashboardPanel extends JPanel {
         JTextField nameField = new JTextField(20);
         formPanel.add(nameField, gbc);
         
+        // Room Type field
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
@@ -236,36 +241,102 @@ public class DesignerDashboardPanel extends JPanel {
         });
         formPanel.add(roomTypeCombo, gbc);
         
+        // Room Shape field
         gbc.gridx = 0;
         gbc.gridy = 2;
+        formPanel.add(new JLabel("Room Shape:"), gbc);
+        
+        gbc.gridx = 1;
+        JComboBox<String> shapeCombo = new JComboBox<>(new String[] {
+            "Rectangle", "Square", "Circular"
+        });
+        formPanel.add(shapeCombo, gbc);
+        
+        // Room Dimensions panel
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         formPanel.add(new JLabel("Room Dimensions:"), gbc);
         
         gbc.gridx = 1;
-        JPanel dimensionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel dimensionsPanel = new JPanel(new CardLayout());
         dimensionsPanel.setOpaque(false);
-        JTextField widthField = new JTextField(5);
-        JTextField lengthField = new JTextField(5);
-        JTextField heightField = new JTextField(5);
-        dimensionsPanel.add(new JLabel("Width:"));
-        dimensionsPanel.add(widthField);
-        dimensionsPanel.add(new JLabel("Length:"));
-        dimensionsPanel.add(lengthField);
-        dimensionsPanel.add(new JLabel("Height:"));
-        dimensionsPanel.add(heightField);
+        
+        // Rectangle dimensions panel
+        JPanel rectDimensionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        rectDimensionsPanel.setOpaque(false);
+        JTextField rectWidthField = new JTextField(5);
+        JTextField rectLengthField = new JTextField(5);
+        JTextField rectHeightField = new JTextField(5);
+        rectDimensionsPanel.add(new JLabel("Width (m):"));
+        rectDimensionsPanel.add(rectWidthField);
+        rectDimensionsPanel.add(new JLabel("Length (m):"));
+        rectDimensionsPanel.add(rectLengthField);
+        rectDimensionsPanel.add(new JLabel("Height (m):"));
+        rectDimensionsPanel.add(rectHeightField);
+        
+        // Square dimensions panel
+        JPanel squareDimensionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        squareDimensionsPanel.setOpaque(false);
+        JTextField squareSideField = new JTextField(5);
+        JTextField squareHeightField = new JTextField(5);
+        squareDimensionsPanel.add(new JLabel("Side Length (m):"));
+        squareDimensionsPanel.add(squareSideField);
+        squareDimensionsPanel.add(new JLabel("Height (m):"));
+        squareDimensionsPanel.add(squareHeightField);
+        
+        // Circular dimensions panel
+        JPanel circularDimensionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        circularDimensionsPanel.setOpaque(false);
+        JTextField diameterField = new JTextField(5);
+        JTextField circularHeightField = new JTextField(5);
+        circularDimensionsPanel.add(new JLabel("Diameter (m):"));
+        circularDimensionsPanel.add(diameterField);
+        circularDimensionsPanel.add(new JLabel("Height (m):"));
+        circularDimensionsPanel.add(circularHeightField);
+        
+        // Add all dimension panels to card layout
+        dimensionsPanel.add(rectDimensionsPanel, "Rectangle");
+        dimensionsPanel.add(squareDimensionsPanel, "Square");
+        dimensionsPanel.add(circularDimensionsPanel, "Circular");
+        
+        // Add listener to shape combo box to switch dimension panels
+        shapeCombo.addActionListener(e -> {
+            String selectedShape = (String) shapeCombo.getSelectedItem();
+            CardLayout cl = (CardLayout) dimensionsPanel.getLayout();
+            cl.show(dimensionsPanel, selectedShape);
+        });
+        
         formPanel.add(dimensionsPanel, gbc);
         
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        formPanel.add(new JLabel("Template:"), gbc);
-        
-        gbc.gridx = 1;
-        JComboBox<String> templateCombo = new JComboBox<>(new String[] {
-            "None", "Modern Living Room", "Standard Office", "Master Bedroom", "Kitchen Basic"
-        });
-        formPanel.add(templateCombo, gbc);
-        
+        // Room Color field
         gbc.gridx = 0;
         gbc.gridy = 4;
+        formPanel.add(new JLabel("Room Color:"), gbc);
+        
+        gbc.gridx = 1;
+        JPanel colorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        colorPanel.setOpaque(false);
+        
+        JPanel colorPreview = new JPanel();
+        colorPreview.setPreferredSize(new Dimension(30, 30));
+        colorPreview.setBackground(Color.WHITE);
+        colorPreview.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        
+        JButton colorButton = new JButton("Choose Color");
+        colorButton.addActionListener(e -> {
+            Color selectedColor = JColorChooser.showDialog(panel, "Choose Room Color", colorPreview.getBackground());
+            if (selectedColor != null) {
+                colorPreview.setBackground(selectedColor);
+            }
+        });
+        
+        colorPanel.add(colorPreview);
+        colorPanel.add(colorButton);
+        formPanel.add(colorPanel, gbc);
+        
+        // Description field
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         formPanel.add(new JLabel("Description:"), gbc);
         
         gbc.gridx = 1;
@@ -273,10 +344,104 @@ public class DesignerDashboardPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(descArea);
         formPanel.add(scrollPane, gbc);
         
+        // Create Design button
         gbc.gridx = 1;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         gbc.anchor = GridBagConstraints.EAST;
         JButton createButton = new JButton("Create Design");
+        createButton.addActionListener(e -> {
+            try {
+                // Get form values
+                String projectName = nameField.getText().trim();
+                String roomType = (String) roomTypeCombo.getSelectedItem();
+                String shape = (String) shapeCombo.getSelectedItem();
+                String description = descArea.getText().trim();
+                
+                // Validate project name
+                if (projectName.isEmpty()) {
+                    JOptionPane.showMessageDialog(panel, "Please enter a project name", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // Get dimensions based on selected shape
+                double width = 0, length = 0, height = 0;
+                
+                try {
+                    if ("Rectangle".equals(shape)) {
+                        width = Double.parseDouble(rectWidthField.getText().trim());
+                        length = Double.parseDouble(rectLengthField.getText().trim());
+                        height = Double.parseDouble(rectHeightField.getText().trim());
+                    } else if ("Square".equals(shape)) {
+                        width = Double.parseDouble(squareSideField.getText().trim());
+                        length = width; // For a square, width = length
+                        height = Double.parseDouble(squareHeightField.getText().trim());
+                    } else if ("Circular".equals(shape)) {
+                        width = Double.parseDouble(diameterField.getText().trim());
+                        length = width; // For a circle, diameter is used for both width and length
+                        height = Double.parseDouble(circularHeightField.getText().trim());
+                    }
+                    
+                    // Validate dimensions
+                    if (width <= 0 || length <= 0 || height <= 0) {
+                        JOptionPane.showMessageDialog(panel, "Dimensions must be positive numbers", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(panel, "Please enter valid numbers for dimensions", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // Get color as hex string
+                Color roomColor = colorPreview.getBackground();
+                String colorHex = String.format("#%02x%02x%02x", 
+                    roomColor.getRed(), roomColor.getGreen(), roomColor.getBlue());
+                
+                // Create room object
+                Room room = new Room();
+                room.setName(projectName);
+                room.setWidth(width);
+                room.setLength(length);
+                room.setHeight(height);
+                room.setColor(colorHex);
+                room.setShape(shape);
+                room.setUserId(currentUser.getId());
+                room.setDescription(description);
+                
+                // Save room to database
+                RoomService roomService = new RoomService();
+                Room savedRoom = roomService.createRoom(room);
+                
+                if (savedRoom != null) {
+                    JOptionPane.showMessageDialog(panel, "Room design created successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    
+                    // Create and add the 2D view panel if it doesn't exist
+                    TwoDViewPanel twoDViewPanel = new TwoDViewPanel(savedRoom);
+                    contentPanel.add(twoDViewPanel, "2d-view");
+                    
+                    // Switch to 2D view
+                    cardLayout.show(contentPanel, "2d-view");
+                    
+                    // Clear form fields
+                    nameField.setText("");
+                    roomTypeCombo.setSelectedIndex(0);
+                    shapeCombo.setSelectedIndex(0);
+                    rectWidthField.setText("");
+                    rectLengthField.setText("");
+                    rectHeightField.setText("");
+                    squareSideField.setText("");
+                    squareHeightField.setText("");
+                    diameterField.setText("");
+                    circularHeightField.setText("");
+                    colorPreview.setBackground(Color.WHITE);
+                    descArea.setText("");
+                } else {
+                    JOptionPane.showMessageDialog(panel, "Error creating room design", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(panel, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        });
         formPanel.add(createButton, gbc);
         
         panel.add(titleLabel, BorderLayout.NORTH);
@@ -285,33 +450,25 @@ public class DesignerDashboardPanel extends JPanel {
         return panel;
     }
     
-    private JPanel create3DViewContent() {
+    private JPanel create2DViewContent() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
         
-        JLabel titleLabel = new JLabel("3D Design View");
+        JLabel titleLabel = new JLabel("2D Room Design View");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Placeholder for 3D view
-        JPanel viewPanel = new JPanel();
-        viewPanel.setBackground(new Color(240, 240, 240));
-        JLabel placeholderLabel = new JLabel("3D View Will Be Displayed Here");
-        placeholderLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        viewPanel.add(placeholderLabel);
+        // Placeholder panel - actual content will be created when a design is selected
+        JPanel placeholderPanel = new JPanel(new BorderLayout());
+        placeholderPanel.setBackground(new Color(245, 245, 245));
         
-        // Toolbar
-        JToolBar toolbar = new JToolBar();
-        toolbar.setFloatable(false);
-        toolbar.add(new JButton("Zoom In"));
-        toolbar.add(new JButton("Zoom Out"));
-        toolbar.add(new JButton("Rotate"));
-        toolbar.add(new JButton("Pan"));
-        toolbar.add(new JButton("Reset View"));
+        JLabel placeholderText = new JLabel("No room selected. Create a new design or select a project to view.");
+        placeholderText.setHorizontalAlignment(JLabel.CENTER);
+        placeholderText.setFont(new Font("Arial", Font.PLAIN, 16));
+        placeholderPanel.add(placeholderText, BorderLayout.CENTER);
         
         panel.add(titleLabel, BorderLayout.NORTH);
-        panel.add(toolbar, BorderLayout.SOUTH);
-        panel.add(viewPanel, BorderLayout.CENTER);
+        panel.add(placeholderPanel, BorderLayout.CENTER);
         
         return panel;
     }
