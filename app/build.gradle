@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+    maven { url "https://jcenter.bintray.com" }
+}
+
+dependencies {
+    // JMonkeyEngine core
+    implementation 'org.jmonkeyengine:jme3-core:3.5.2-stable'
+    implementation 'org.jmonkeyengine:jme3-desktop:3.5.2-stable'
+    implementation 'org.jmonkeyengine:jme3-lwjgl3:3.5.2-stable'
+    implementation 'org.jmonkeyengine:jme3-plugins:3.5.2-stable'
+    implementation 'org.jmonkeyengine:jme3-effects:3.5.2-stable'
+    
+    // SQLite JDBC
+    implementation 'org.xerial:sqlite-jdbc:3.41.2.1'
+    
+    // For JSON handling
+    implementation 'com.google.code.gson:gson:2.10.1'
+    
+    // Password hashing
+    implementation 'org.mindrot:jbcrypt:0.4'
+    
+    // Testing
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+}
+
+application {
+    mainClass = 'com.furnituredesigner.App'
+}
+
+run {
+    // Set working directory to project root
+    workingDir = rootProject.projectDir
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// For creating a fat JAR
+tasks.register('fatJar', Jar) {
+    archiveClassifier = 'fat'
+    
+    manifest {
+        attributes 'Main-Class': 'com.furnituredesigner.App'
+    }
+    
+    from sourceSets.main.output
+    
+    dependsOn configurations.runtimeClasspath
+    from {
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+    }
+}
