@@ -67,9 +67,9 @@ public class MainFrame extends JFrame {
         contentPanel = new JPanel(cardLayout);
         contentPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
         
-        // Create dashboard panels
-        adminDashboardPanel = new AdminDashboardPanel(currentUser, e -> switchToDashboard("designer"));
-        designerDashboardPanel = new DesignerDashboardPanel(currentUser, e -> switchToDashboard("admin"));
+        // Create dashboard panels without navigation action listeners
+        adminDashboardPanel = new AdminDashboardPanel(currentUser);
+        designerDashboardPanel = new DesignerDashboardPanel(currentUser);
         
         // Add dashboard panels to content panel
         contentPanel.add(adminDashboardPanel, "admin");

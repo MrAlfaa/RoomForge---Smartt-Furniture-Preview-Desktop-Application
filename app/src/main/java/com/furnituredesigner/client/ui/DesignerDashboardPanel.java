@@ -12,7 +12,8 @@ public class DesignerDashboardPanel extends JPanel {
     private JPanel contentPanel;
     private CardLayout cardLayout;
     
-    public DesignerDashboardPanel(User user, ActionListener adminNavAction) {
+    // Remove the adminNavAction parameter from constructor
+    public DesignerDashboardPanel(User user) {
         this.currentUser = user;
         
         setLayout(new BorderLayout());
@@ -32,11 +33,11 @@ public class DesignerDashboardPanel extends JPanel {
         navPanel.addMenuItem("Templates", "templates", "T");
         navPanel.addMenuItem("Settings", "settings", "S");
         
-        // Add admin dashboard navigation for admin users
-        if (user.isAdmin()) {
-            navPanel.addSeparator();
-            navPanel.addNavButton("Admin Dashboard", "A", adminNavAction);
-        }
+        // Remove the Admin Dashboard navigation button
+        // if (user.isAdmin()) {
+        //     navPanel.addSeparator();
+        //     navPanel.addNavButton("Admin Dashboard", "A", adminNavAction);
+        // }
         
         // Create content panels
         JPanel projectsContent = createProjectsContent();
