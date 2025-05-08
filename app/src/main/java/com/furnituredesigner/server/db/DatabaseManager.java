@@ -76,6 +76,24 @@ public class DatabaseManager {
                     }
                 }
             
+                // Check if shape column exists in rooms table
+                try {
+                    stmt.execute("SELECT shape FROM rooms LIMIT 1");
+                } catch (SQLException e) {
+                    // Shape column doesn't exist, add it
+                    stmt.execute("ALTER TABLE rooms ADD COLUMN shape TEXT DEFAULT 'rectangle'");
+                    System.out.println("Database schema updated: added shape column to rooms table");
+                }
+
+                // Check if description column exists in rooms table
+                try {
+                    stmt.execute("SELECT description FROM rooms LIMIT 1");
+                } catch (SQLException e) {
+                    // Description column doesn't exist, add it
+                    stmt.execute("ALTER TABLE rooms ADD COLUMN description TEXT");
+                    System.out.println("Database schema updated: added description column to rooms table");
+                }
+            
             } catch (SQLException e) {
                 System.err.println("Error updating database schema: " + e.getMessage());
                 e.printStackTrace();
