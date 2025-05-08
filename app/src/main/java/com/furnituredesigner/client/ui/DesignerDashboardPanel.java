@@ -38,7 +38,7 @@ public class DesignerDashboardPanel extends JPanel {
         NavigationPanel navPanel = new NavigationPanel(contentPanel, cardLayout);
         
         // Add menu items with simple text icons instead of emoji
-        navPanel.addMenuItem("Projects", "projects", "P");
+        // navPanel.addMenuItem("Projects", "projects", "P");
         navPanel.addMenuItem("New Design", "new-design", "+");
         navPanel.addMenuItem("2D View", "2d-view", "2D");
         navPanel.addMenuItem("3D View", "3d-preview", "3D");  // Add 3D View navigation item
