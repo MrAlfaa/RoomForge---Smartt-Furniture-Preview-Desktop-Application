@@ -7,6 +7,7 @@ import com.furnituredesigner.server.service.UserService;
 import com.furnituredesigner.server.service.RoomService;
 import com.furnituredesigner.server.service.TemplateService;
 import java.awt.geom.Arc2D;
+import com.furnituredesigner.client.ui.ProjectManagementPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,6 +29,7 @@ public class AdminDashboardPanel extends JPanel {
     private JPanel contentPanel;
     private CardLayout cardLayout;
     private UserManagementPanel userManagementPanel;
+    private ProjectManagementPanel projectManagementPanel;
     private UserService userService;
     private RoomService roomService;
     private TemplateService templateService;
@@ -78,14 +80,14 @@ public class AdminDashboardPanel extends JPanel {
         // Create and add UserManagementPanel
         userManagementPanel = new UserManagementPanel(currentUser);
         
-        JPanel projectsContent = createProjectsContent();
+        projectManagementPanel = new ProjectManagementPanel(currentUser);
         JPanel reportsContent = createReportsContent();
         JPanel settingsContent = createSettingsContent();
         
         // Add content panels to the card layout
         contentPanel.add(dashboardContent, "dashboard");
         contentPanel.add(userManagementPanel, "users");
-        contentPanel.add(projectsContent, "projects");
+        contentPanel.add(projectManagementPanel, "projects");
         contentPanel.add(reportsContent, "reports");
         contentPanel.add(settingsContent, "settings");
         
