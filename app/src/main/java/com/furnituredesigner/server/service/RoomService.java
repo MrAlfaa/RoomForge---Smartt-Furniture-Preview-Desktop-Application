@@ -102,4 +102,49 @@ public class RoomService {
         
         return null;
     }
+    
+    /**
+     * Delete a room by ID
+     * 
+     * @param roomId The ID of the room to delete
+     * @return true if deletion was successful
+     * @throws SQLException if there's an error accessing the database
+     */
+    public boolean deleteRoom(int roomId) throws SQLException {
+        String sql = "DELETE FROM rooms WHERE id = ?";
+        
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, roomId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+    
+    /**
+     * Update room details
+     * 
+     * @param room The room object with updated details
+     * @return true if update was successful
+     * @throws SQLException if there's an error accessing the database
+     */
+    public boolean updateRoom(Room room) throws SQLException {
+        String sql = "UPDATE rooms SET name = ?, width = ?, length = ?, height = ?, " +
+                     "color = ?, shape = ?, description = ? WHERE id = ?";
+        
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, room.getName());
+            stmt.setDouble(2, room.getWidth());
+            stmt.setDouble(3, room.getLength());
+            stmt.setDouble(4, room.getHeight());
+            stmt.setString(5, room.getColor());
+            stmt.setString(6, room.getShape());
+            stmt.setString(7, room.getDescription());
+            stmt.setInt(8, room.getId());
+            
+            return stmt.executeUpdate() > 0;
+        }
+    }
 }

@@ -94,6 +94,25 @@ public class DatabaseManager {
                     System.out.println("Database schema updated: added description column to rooms table");
                 }
             
+                // Check if templates table exists
+                try {
+                    stmt.execute("SELECT id FROM templates LIMIT 1");
+                    System.out.println("Templates table exists");
+                } catch (SQLException e) {
+                    // Templates table doesn't exist, create it
+                    stmt.execute("CREATE TABLE IF NOT EXISTS templates (" +
+                            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                            "title TEXT NOT NULL," +
+                            "comments TEXT," +
+                            "room_id INTEGER," +
+                            "user_id INTEGER," +
+                            "room_type TEXT," +
+                            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                            "FOREIGN KEY (room_id) REFERENCES rooms(id)," +
+                            "FOREIGN KEY (user_id) REFERENCES users(id))");
+                    System.out.println("Database schema updated: created templates table");
+                }
+            
             } catch (SQLException e) {
                 System.err.println("Error updating database schema: " + e.getMessage());
                 e.printStackTrace();
@@ -150,6 +169,18 @@ public class DatabaseManager {
                         "description TEXT," +
                         "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
                         "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                        "FOREIGN KEY (room_id) REFERENCES rooms(id)," +
+                        "FOREIGN KEY (user_id) REFERENCES users(id))");
+            
+                // Create templates table
+                stmt.execute("CREATE TABLE IF NOT EXISTS templates (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                        "title TEXT NOT NULL," +
+                        "comments TEXT," +
+                        "room_id INTEGER," +
+                        "user_id INTEGER," +
+                        "room_type TEXT," +
+                        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
                         "FOREIGN KEY (room_id) REFERENCES rooms(id)," +
                         "FOREIGN KEY (user_id) REFERENCES users(id))");
             
