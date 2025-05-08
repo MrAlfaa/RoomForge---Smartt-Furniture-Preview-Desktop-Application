@@ -3,6 +3,16 @@ package com.furnituredesigner.client.ui;
 import com.furnituredesigner.common.model.User;
 import com.furnituredesigner.common.model.Room;
 import com.furnituredesigner.server.service.RoomService;
+import java.text.SimpleDateFormat;
+import com.furnituredesigner.common.model.Template;
+import com.furnituredesigner.server.service.TemplateService;
+import java.text.SimpleDateFormat;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Window;
+import java.util.List;
+
+
 
 import javax.swing.*;
 import java.awt.*;
@@ -540,62 +550,382 @@ public class DesignerDashboardPanel extends JPanel {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
+        // Create a panel for filter controls
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        filterPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 10, 20));
+        filterPanel.setOpaque(false);
+        
+        filterPanel.add(new JLabel("Filter by Room Type:"));
+        JComboBox<String> roomTypeFilter = new JComboBox<>(new String[] {
+            "All", "Living Room", "Bedroom", "Kitchen", "Bathroom", "Office", "Dining Room", "Other"
+        });
+        filterPanel.add(roomTypeFilter);
+        
+        JButton refreshButton = new JButton("Refresh");
+        filterPanel.add(refreshButton);
+        
+        // Create template cards panel
         JPanel templatesGrid = new JPanel(new GridLayout(0, 2, 15, 15));
         templatesGrid.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
         templatesGrid.setOpaque(false);
         
-        // Add template cards
-        templatesGrid.add(createTemplateCard("Modern Living Room", "Contemporary design with open space concept"));
-        templatesGrid.add(createTemplateCard("Office Space", "Productive workspace with ergonomic furniture"));
-        templatesGrid.add(createTemplateCard("Master Bedroom", "Luxurious bedroom setup with walk-in closet"));
-        templatesGrid.add(createTemplateCard("Kitchen Basic", "Functional kitchen with optimized workflow"));
+        // Load user's saved templates
+        loadUserTemplates(templatesGrid, "All");
+        
+        // Add refresh action
+        refreshButton.addActionListener(e -> {
+            String filterType = (String) roomTypeFilter.getSelectedItem();
+            templatesGrid.removeAll();
+            loadUserTemplates(templatesGrid, filterType);
+            templatesGrid.revalidate();
+            templatesGrid.repaint();
+        });
+        
+        // Add filter action
+        roomTypeFilter.addActionListener(e -> {
+            String filterType = (String) roomTypeFilter.getSelectedItem();
+            templatesGrid.removeAll();
+            loadUserTemplates(templatesGrid, filterType);
+            templatesGrid.revalidate();
+            templatesGrid.repaint();
+        });
         
         JScrollPane scrollPane = new JScrollPane(templatesGrid);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         
         panel.add(titleLabel, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(filterPanel, BorderLayout.CENTER);
+        panel.add(scrollPane, BorderLayout.SOUTH);
         
         return panel;
     }
     
-    private JPanel createTemplateCard(String title, String description) {
+    private void loadUserTemplates(JPanel templatesGrid, String filterType) {
+        try {
+            TemplateService templateService = new TemplateService();
+            java.util.List<Template> templates = templateService.getTemplatesByUserId(currentUser.getId());
+            
+            boolean hasTemplates = false;
+            
+            for (Template template : templates) {
+                // Apply filter if not "All"
+                if (!"All".equals(filterType) && !template.getRoomType().equals(filterType)) {
+                    continue;
+                }
+                
+                templatesGrid.add(createTemplateCard(template));
+                hasTemplates = true;
+            }
+            
+            if (!hasTemplates) {
+                JPanel emptyPanel = new JPanel(new BorderLayout());
+                emptyPanel.setBackground(new Color(245, 245, 245));
+                JLabel emptyLabel = new JLabel("No templates found. Save a room layout as template to see it here.");
+                emptyLabel.setHorizontalAlignment(JLabel.CENTER);
+                emptyPanel.add(emptyLabel, BorderLayout.CENTER);
+                templatesGrid.add(emptyPanel);
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, 
+                "Failed to load templates: " + e.getMessage(), 
+                "Database Error", 
+                JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            
+            // Show error message in panel
+            JPanel errorPanel = new JPanel(new BorderLayout());
+            errorPanel.setBackground(new Color(255, 235, 235));
+            JLabel errorLabel = new JLabel("Error loading templates: " + e.getMessage());
+            errorLabel.setHorizontalAlignment(JLabel.CENTER);
+            errorPanel.add(errorLabel, BorderLayout.CENTER);
+            templatesGrid.add(errorPanel);
+        }
+    }
+    
+    private JPanel createTemplateCard(Template template) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         panel.setBackground(Color.WHITE);
         
-        JPanel imagePanel = new JPanel();
-        imagePanel.setBackground(new Color(240, 240, 240));
-        imagePanel.setPreferredSize(new Dimension(0, 180));
-        JLabel imageLabel = new JLabel("Template Preview");
-        imageLabel.setHorizontalAlignment(JLabel.CENTER);
-        imagePanel.add(imageLabel);
+        // Add room preview (could be a colored panel to represent the room)
+        JPanel previewPanel = new JPanel();
+        previewPanel.setBackground(new Color(240, 240, 240));
+        previewPanel.setPreferredSize(new Dimension(0, 180));
         
+        try {
+            RoomService roomService = new RoomService();
+            Room room = roomService.getRoomById(template.getRoomId());
+            
+            if (room != null) {
+                // Use the room's color for the preview background
+                previewPanel.setBackground(room.getColorObject());
+                
+                // Add a label with room dimensions
+                JLabel dimensionsLabel = new JLabel(String.format("%.1fm x %.1fm", room.getWidth(), room.getLength()));
+                dimensionsLabel.setForeground(Color.WHITE);
+                dimensionsLabel.setFont(new Font("Arial", Font.BOLD, 14));
+                previewPanel.add(dimensionsLabel);
+            }
+        } catch (SQLException e) {
+            // Just use default color if we can't load the room
+        }
+        
+        // Info panel with title, date, etc.
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         infoPanel.setOpaque(false);
         
-        JLabel titleLabel = new JLabel(title);
+        JLabel titleLabel = new JLabel(template.getTitle());
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
         
-        JLabel descLabel = new JLabel("<html>" + description + "</html>");
-        descLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        JLabel typeLabel = new JLabel("Room Type: " + template.getRoomType());
+        typeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         
-        JButton useButton = new JButton("Use Template");
-        useButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Format date to a readable format
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
+        String dateString = sdf.format(template.getCreatedAt());
+        JLabel dateLabel = new JLabel("Created: " + dateString);
+        dateLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         
+        JLabel commentsLabel = new JLabel("<html>" + (template.getComments() != null ? template.getComments() : "") + "</html>");
+        commentsLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        
+        // Add components to info panel
         infoPanel.add(titleLabel);
         infoPanel.add(Box.createVerticalStrut(5));
-        infoPanel.add(descLabel);
-        infoPanel.add(Box.createVerticalStrut(10));
-        infoPanel.add(useButton);
+        infoPanel.add(typeLabel);
+        infoPanel.add(Box.createVerticalStrut(5));
+        infoPanel.add(dateLabel);
         
-        panel.add(imagePanel, BorderLayout.NORTH);
+        if (template.getComments() != null && !template.getComments().isEmpty()) {
+            infoPanel.add(Box.createVerticalStrut(5));
+            infoPanel.add(commentsLabel);
+        }
+        
+        // Buttons panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setOpaque(false);
+        
+        JButton viewButton = new JButton("View Layout");
+        JButton editButton = new JButton("Edit");
+        JButton deleteButton = new JButton("Delete");
+        
+        // View button action - load the template in 2D view
+        viewButton.addActionListener(e -> {
+            try {
+                // Get room from the template
+                RoomService roomService = new RoomService();
+                Room room = roomService.getRoomById(template.getRoomId());
+                
+                if (room != null) {
+                    // Create 2D view panel with the room
+                    TwoDViewPanel twoDViewPanel = new TwoDViewPanel(room);
+                    
+                    // Add to content panel and show it
+                    contentPanel.add(twoDViewPanel, "2d-view");
+                    cardLayout.show(contentPanel, "2d-view");
+                } else {
+                    JOptionPane.showMessageDialog(panel, 
+                        "Room not found for this template", 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(panel, 
+                    "Error loading template: " + ex.getMessage(), 
+                    "Database Error", 
+                    JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        });
+        
+        // Edit button action - open dialog to edit template details
+        editButton.addActionListener(e -> {
+            showTemplateEditDialog(template, panel);
+        });
+        
+        // Delete button action
+        deleteButton.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(panel, 
+                "Are you sure you want to delete this template?", 
+                "Confirm Delete", 
+                JOptionPane.YES_NO_OPTION);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    TemplateService templateService = new TemplateService();
+                    boolean deleted = templateService.deleteTemplate(template.getId());
+                    
+                    if (deleted) {
+                        JOptionPane.showMessageDialog(panel, 
+                            "Template deleted successfully", 
+                            "Success", 
+                            JOptionPane.INFORMATION_MESSAGE);
+                        
+                        // Refresh the templates panel
+                        cardLayout.show(contentPanel, "other-panel"); // Switch to any other panel temporarily
+                        cardLayout.show(contentPanel, "templates"); // Switch back to refresh
+                    } else {
+                        JOptionPane.showMessageDialog(panel, 
+                            "Failed to delete template", 
+                            "Error", 
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(panel, 
+                        "Database error: " + ex.getMessage(), 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                }
+            }
+        });
+        
+        buttonPanel.add(viewButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
+        
+        // Add everything to the main panel
+        panel.add(previewPanel, BorderLayout.NORTH);
         panel.add(infoPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
         
         return panel;
+    }
+    
+    private void showTemplateEditDialog(Template template, JPanel parentPanel) {
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog;
+        if (owner instanceof Frame) {
+            dialog = new JDialog((Frame) owner, "Edit Template", true);
+        } else if (owner instanceof Dialog) {
+            dialog = new JDialog((Dialog) owner, "Edit Template", true);
+        } else {
+            dialog = new JDialog();
+            dialog.setTitle("Edit Template");
+            dialog.setModal(true);
+        }
+        dialog.setLayout(new BorderLayout());
+        
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        
+        // Template title
+        panel.add(new JLabel("Template Title:"), gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        JTextField titleField = new JTextField(20);
+        titleField.setText(template.getTitle());
+        panel.add(titleField, gbc);
+        
+        // Room type field
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0;
+        panel.add(new JLabel("Room Type:"), gbc);
+        
+        gbc.gridx = 1;
+        JComboBox<String> roomTypeCombo = new JComboBox<>(new String[] {
+            "Living Room", "Bedroom", "Kitchen", "Bathroom", "Office", "Dining Room", "Other"
+        });
+        roomTypeCombo.setSelectedItem(template.getRoomType());
+        panel.add(roomTypeCombo, gbc);
+        
+        // Comments
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        panel.add(new JLabel("Comments:"), gbc);
+        
+        gbc.gridx = 1;
+        JTextArea commentsArea = new JTextArea(5, 20);
+        commentsArea.setLineWrap(true);
+        commentsArea.setWrapStyleWord(true);
+        commentsArea.setText(template.getComments());
+        JScrollPane scrollPane = new JScrollPane(commentsArea);
+        panel.add(scrollPane, gbc);
+        
+        // Buttons
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton cancelButton = new JButton("Cancel");
+        JButton saveButton = new JButton("Save Changes");
+        
+        cancelButton.addActionListener(evt -> dialog.dispose());
+        
+        saveButton.addActionListener(evt -> {
+            String title = titleField.getText().trim();
+            String roomType = (String) roomTypeCombo.getSelectedItem();
+            String comments = commentsArea.getText().trim();
+            
+            if (title.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, 
+                    "Please enter a template title", 
+                    "Validation Error", 
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            try {
+                // Update template object
+                template.setTitle(title);
+                template.setComments(comments);
+                template.setRoomType(roomType);
+                
+                // Save changes
+                TemplateService templateService = new TemplateService();
+                boolean updated = templateService.updateTemplate(template);
+                
+                if (updated) {
+                    JOptionPane.showMessageDialog(dialog, 
+                        "Template updated successfully!", 
+                        "Success", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    
+                    // Refresh the templates panel
+                    cardLayout.show(contentPanel, "other-panel"); // Switch to any other panel temporarily
+                    cardLayout.show(contentPanel, "templates"); // Switch back to refresh
+                } else {
+                    JOptionPane.showMessageDialog(dialog, 
+                        "Failed to update template", 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(dialog, 
+                    "Database error: " + ex.getMessage(), 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        });
+        
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(saveButton);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(buttonPanel, gbc);
+        
+        dialog.add(panel, BorderLayout.CENTER);
+        dialog.pack();
+        dialog.setLocationRelativeTo(parentPanel);
+        dialog.setVisible(true);
     }
     
     private JPanel createSettingsContent() {
