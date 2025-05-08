@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import com.furnituredesigner.common.model.Template;
 import com.furnituredesigner.server.service.TemplateService;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import com.furnituredesigner.client.ui.WrapLayout;
 
@@ -132,12 +133,12 @@ public void refreshTemplatesPanel() {
     
     // If we found grid or list panels, refresh their content
     if (gridPanel != null) {
-        loadUserTemplates(gridPanel, "All", true);
+        loadUserTemplates(gridPanel, "All", true, "", "Newest First");
         System.out.println("Refreshed grid panel for templates");
     }
     
     if (listPanel != null) {
-        loadUserTemplates(listPanel, "All", false);
+        loadUserTemplates(listPanel, "All", false, "", "Newest First");
         System.out.println("Refreshed list panel for templates");
     }
     
@@ -631,167 +632,245 @@ public void showTemplatesPanel() {
     }
     
     private JPanel createTemplatesContent() {
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBackground(Color.WHITE);
-    panel.setName("templates");
-    
-    JLabel titleLabel = new JLabel("Design Templates");
-    titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-    titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-    
-    // Create a panel for filter controls with better organization
-    JPanel controlPanel = new JPanel(new BorderLayout());
-    controlPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 10, 20));
-    controlPanel.setOpaque(false);
-    
-    // Left side filter controls
-    JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    filterPanel.setOpaque(false);
-    
-    filterPanel.add(new JLabel("Filter by Room Type:"));
-    JComboBox<String> roomTypeFilter = new JComboBox<>(new String[] {
-        "All", "Living Room", "Bedroom", "Kitchen", "Bathroom", "Office", "Dining Room", "Other"
-    });
-    filterPanel.add(roomTypeFilter);
-    
-    JButton refreshButton = new JButton("Refresh");
-    filterPanel.add(refreshButton);
-    
-    // Right side view controls
-    JPanel viewControlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-    viewControlPanel.setOpaque(false);
-    
-    
-    JToggleButton gridViewButton = new JToggleButton("Grid View");
-    JToggleButton listViewButton = new JToggleButton("List View");
-    
-    // Group the view buttons
-    ButtonGroup viewButtonGroup = new ButtonGroup();
-    viewButtonGroup.add(gridViewButton);
-    viewButtonGroup.add(listViewButton);
-    gridViewButton.setSelected(true);  // Default to grid view
-    
-    viewControlPanel.add(gridViewButton);
-    viewControlPanel.add(listViewButton);
-    
-    controlPanel.add(filterPanel, BorderLayout.WEST);
-    controlPanel.add(viewControlPanel, BorderLayout.EAST);
-    
-    // Create content panel with card layout for different views
-    JPanel viewsPanel = new JPanel(new CardLayout());
-    viewsPanel.setName("viewsPanel"); 
-    
-    // Create grid view panel with WrapLayout
-    JPanel gridPanel = new JPanel(new WrapLayout(WrapLayout.LEFT, 15, 15));
-    gridPanel.setOpaque(false);
-    gridPanel.setName("gridPanel");
-    
-    // Create list view panel with BoxLayout
-    JPanel listPanel = new JPanel();
-    listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
-    listPanel.setOpaque(false);
-    listPanel.setName("listPanel");
-    
-    // Create scroll panes for both views to ensure proper scrolling
-    JScrollPane gridScrollPane = new JScrollPane(gridPanel);
-    gridScrollPane.setBorder(null);
-    gridScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    gridScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-    
-    JScrollPane listScrollPane = new JScrollPane(listPanel);
-    listScrollPane.setBorder(null);
-    listScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    listScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-    
-    // Add scroll panes to the card layout panel
-    viewsPanel.add(gridScrollPane, "grid");
-    viewsPanel.add(listScrollPane, "list");
-    CardLayout viewsCardLayout = (CardLayout) viewsPanel.getLayout();
-    
-    // Load templates for the default view (grid)
-    loadUserTemplates(gridPanel, "All", true);
-    
-    // Add logic for view switching
-    gridViewButton.addActionListener(e -> {
-        viewsCardLayout.show(viewsPanel, "grid");
-        // Only reload if not already loaded
-        if (gridPanel.getComponentCount() == 0) {
-            loadUserTemplates(gridPanel, (String) roomTypeFilter.getSelectedItem(), true);
-        }
-    });
-    
-    listViewButton.addActionListener(e -> {
-        viewsCardLayout.show(viewsPanel, "list");
-        // Only reload if not already loaded
-        if (listPanel.getComponentCount() == 0) {
-            loadUserTemplates(listPanel, (String) roomTypeFilter.getSelectedItem(), false);
-        }
-    });
-    
-    // Add refresh button logic
-    refreshButton.addActionListener(e -> {
-        String filterType = (String) roomTypeFilter.getSelectedItem();
-        JPanel activePanel = gridViewButton.isSelected() ? gridPanel : listPanel;
-        boolean isGridView = gridViewButton.isSelected();
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setName("templates");
         
-        // Show loading indicator
-        activePanel.removeAll();
-        JLabel loadingLabel = new JLabel("Loading templates...");
-        loadingLabel.setHorizontalAlignment(JLabel.CENTER);
-        activePanel.add(loadingLabel);
-        activePanel.revalidate();
-        activePanel.repaint();
+        // Title panel at the top
+        JLabel titleLabel = new JLabel("Design Templates");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Use SwingWorker to reload in background
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() {
-                try {
-                    Thread.sleep(200); // Small delay for UI update
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                }
-                return null;
+        // Create filter panel with more options
+        JPanel filterPanel = new JPanel(new BorderLayout());
+        filterPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 15, 20));
+        filterPanel.setOpaque(false);
+        
+        // Top row: Search and filters
+        JPanel topFilterRow = new JPanel(new BorderLayout());
+        topFilterRow.setOpaque(false);
+        
+        // Left side: Search bar
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.setOpaque(false);
+        
+        JTextField searchField = new JTextField(20);
+        searchField.putClientProperty("JTextField.placeholderText", "Search by template name");
+        
+        JButton searchButton = new JButton("Search");
+        
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+        
+        // Right side: View controls
+        JPanel viewControlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        viewControlPanel.setOpaque(false);
+        
+        JToggleButton gridViewButton = new JToggleButton("Grid View");
+        JToggleButton listViewButton = new JToggleButton("List View");
+        
+        ButtonGroup viewButtonGroup = new ButtonGroup();
+        viewButtonGroup.add(gridViewButton);
+        viewButtonGroup.add(listViewButton);
+        gridViewButton.setSelected(true);
+        
+        viewControlPanel.add(gridViewButton);
+        viewControlPanel.add(listViewButton);
+        
+        topFilterRow.add(searchPanel, BorderLayout.WEST);
+        topFilterRow.add(viewControlPanel, BorderLayout.EAST);
+        
+        // Bottom row: Category filters and sorting
+        JPanel bottomFilterRow = new JPanel(new BorderLayout());
+        bottomFilterRow.setOpaque(false);
+        
+        // Left side: Room type filter
+        JPanel typeFilterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        typeFilterPanel.setOpaque(false);
+        
+        typeFilterPanel.add(new JLabel("Room Type:"));
+        JComboBox<String> roomTypeFilter = new JComboBox<>(new String[] {
+            "All", "Living Room", "Bedroom", "Kitchen", "Bathroom", "Office", "Dining Room", "Other"
+        });
+        typeFilterPanel.add(roomTypeFilter);
+        
+        // Right side: Sort options
+        JPanel sortPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        sortPanel.setOpaque(false);
+        
+        sortPanel.add(new JLabel("Sort By:"));
+        JComboBox<String> sortOptions = new JComboBox<>(new String[] {
+            "Newest First", "Oldest First", "A-Z", "Z-A"
+        });
+        sortPanel.add(sortOptions);
+        
+        JButton refreshButton = new JButton("Refresh");
+        sortPanel.add(refreshButton);
+        
+        bottomFilterRow.add(typeFilterPanel, BorderLayout.WEST);
+        bottomFilterRow.add(sortPanel, BorderLayout.EAST);
+        
+        // Add filter rows to the filter panel
+        filterPanel.add(topFilterRow, BorderLayout.NORTH);
+        filterPanel.add(bottomFilterRow, BorderLayout.SOUTH);
+        
+        // Content panel with card layout for different views
+        JPanel viewsPanel = new JPanel(new CardLayout());
+        viewsPanel.setName("viewsPanel");
+        
+        // Create grid view panel with WrapLayout
+        JPanel gridPanel = new JPanel(new WrapLayout(WrapLayout.LEFT, 15, 15));
+        gridPanel.setOpaque(false);
+        gridPanel.setName("gridPanel");
+        
+        // Create list view panel with BoxLayout
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        listPanel.setOpaque(false);
+        listPanel.setName("listPanel");
+        
+        // Create scroll panes for both views
+        JScrollPane gridScrollPane = new JScrollPane(gridPanel);
+        gridScrollPane.setBorder(null);
+        gridScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        gridScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        
+        JScrollPane listScrollPane = new JScrollPane(listPanel);
+        listScrollPane.setBorder(null);
+        listScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        listScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        
+        // Add scroll panes to the card layout panel
+        viewsPanel.add(gridScrollPane, "grid");
+        viewsPanel.add(listScrollPane, "list");
+        CardLayout viewsCardLayout = (CardLayout) viewsPanel.getLayout();
+        
+        // Load templates for the default view (grid)
+        loadUserTemplates(gridPanel, "All", true, null, "Newest First");
+        
+        // Add logic for view switching
+        gridViewButton.addActionListener(e -> {
+            viewsCardLayout.show(viewsPanel, "grid");
+            // Only reload if not already loaded
+            if (gridPanel.getComponentCount() == 0) {
+                loadUserTemplates(gridPanel, 
+                    (String) roomTypeFilter.getSelectedItem(), 
+                    true, 
+                    searchField.getText(), 
+                    (String) sortOptions.getSelectedItem());
             }
+        });
+        
+        listViewButton.addActionListener(e -> {
+            viewsCardLayout.show(viewsPanel, "list");
+            // Only reload if not already loaded
+            if (listPanel.getComponentCount() == 0) {
+                loadUserTemplates(listPanel, 
+                    (String) roomTypeFilter.getSelectedItem(), 
+                    false, 
+                    searchField.getText(), 
+                    (String) sortOptions.getSelectedItem());
+            }
+        });
+        
+        // Add refresh button logic
+        refreshButton.addActionListener(e -> {
+            String filterType = (String) roomTypeFilter.getSelectedItem();
+            String searchQuery = searchField.getText().trim();
+            String sortOrder = (String) sortOptions.getSelectedItem();
+            JPanel activePanel = gridViewButton.isSelected() ? gridPanel : listPanel;
+            boolean isGridView = gridViewButton.isSelected();
             
-            @Override
-            protected void done() {
-                loadUserTemplates(activePanel, filterType, isGridView);
-                activePanel.revalidate();
-                activePanel.repaint();
-            }
-        };
-        worker.execute();
-    });
-    
-    // Add filter change logic
-    roomTypeFilter.addActionListener(e -> {
-        String filterType = (String) roomTypeFilter.getSelectedItem();
-        JPanel activePanel = gridViewButton.isSelected() ? gridPanel : listPanel;
-        boolean isGridView = gridViewButton.isSelected();
+            // Show loading indicator
+            activePanel.removeAll();
+            JLabel loadingLabel = new JLabel("Loading templates...");
+            loadingLabel.setHorizontalAlignment(JLabel.CENTER);
+            activePanel.add(loadingLabel);
+            activePanel.revalidate();
+            activePanel.repaint();
+            
+            // Use SwingWorker to reload in background
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() {
+                    try {
+                        Thread.sleep(200); // Small delay for UI update
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                    return null;
+                }
+                
+                @Override
+                protected void done() {
+                    loadUserTemplates(activePanel, filterType, isGridView, searchQuery, sortOrder);
+                    activePanel.revalidate();
+                    activePanel.repaint();
+                }
+            };
+            worker.execute();
+        });
         
-        activePanel.removeAll();
-        loadUserTemplates(activePanel, filterType, isGridView);
-        activePanel.revalidate();
-        activePanel.repaint();
-    });
+        // Add search button logic
+        searchButton.addActionListener(e -> {
+            String filterType = (String) roomTypeFilter.getSelectedItem();
+            String searchQuery = searchField.getText().trim();
+            String sortOrder = (String) sortOptions.getSelectedItem();
+            JPanel activePanel = gridViewButton.isSelected() ? gridPanel : listPanel;
+            boolean isGridView = gridViewButton.isSelected();
+            
+            activePanel.removeAll();
+            loadUserTemplates(activePanel, filterType, isGridView, searchQuery, sortOrder);
+            activePanel.revalidate();
+            activePanel.repaint();
+        });
+        
+        // Enter key in search field triggers search
+        searchField.addActionListener(e -> searchButton.doClick());
+        
+        // Add room type filter logic
+        roomTypeFilter.addActionListener(e -> {
+            String filterType = (String) roomTypeFilter.getSelectedItem();
+            String searchQuery = searchField.getText().trim();
+            String sortOrder = (String) sortOptions.getSelectedItem();
+            JPanel activePanel = gridViewButton.isSelected() ? gridPanel : listPanel;
+            boolean isGridView = gridViewButton.isSelected();
+            
+            activePanel.removeAll();
+            loadUserTemplates(activePanel, filterType, isGridView, searchQuery, sortOrder);
+            activePanel.revalidate();
+            activePanel.repaint();
+        });
+        
+        // Add sort options logic
+        sortOptions.addActionListener(e -> {
+            String filterType = (String) roomTypeFilter.getSelectedItem();
+            String searchQuery = searchField.getText().trim();
+            String sortOrder = (String) sortOptions.getSelectedItem();
+            JPanel activePanel = gridViewButton.isSelected() ? gridPanel : listPanel;
+            boolean isGridView = gridViewButton.isSelected();
+            
+            activePanel.removeAll();
+            loadUserTemplates(activePanel, filterType, isGridView, searchQuery, sortOrder);
+            activePanel.revalidate();
+            activePanel.repaint();
+        });
+        
+        // Create a main content panel to hold both the filter panel and views panel
+        JPanel mainContentPanel = new JPanel(new BorderLayout());
+        mainContentPanel.add(filterPanel, BorderLayout.NORTH);
+        mainContentPanel.add(viewsPanel, BorderLayout.CENTER);
+        
+        // Add title to NORTH and main content to CENTER
+        panel.add(titleLabel, BorderLayout.NORTH);
+        panel.add(mainContentPanel, BorderLayout.CENTER);
+        
+        return panel;
+    }
     
-    // Create a status panel for feedback
-    JPanel statusPanel = new JPanel(new BorderLayout());
-    statusPanel.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 20));
-    statusPanel.setBackground(new Color(245, 245, 245));
-    JLabel statusLabel = new JLabel(" ");
-    statusPanel.add(statusLabel, BorderLayout.WEST);
     
-    // Add components to main panel in correct order
-    panel.add(titleLabel, BorderLayout.NORTH);
-    panel.add(controlPanel, BorderLayout.CENTER);
-    panel.add(viewsPanel, BorderLayout.CENTER); // This was missing - viewsPanel needs to be added to main panel
-    
-    return panel;
-}
-    
-private void loadUserTemplates(JPanel targetPanel, String filterType, boolean isGridView) {
+private void loadUserTemplates(JPanel targetPanel, String filterType, boolean isGridView, 
+                              String searchQuery, String sortOrder) {
     targetPanel.removeAll();
     
     if (isGridView) {
@@ -810,20 +889,56 @@ private void loadUserTemplates(JPanel targetPanel, String filterType, boolean is
         TemplateService templateService = new TemplateService();
         List<Template> templates = templateService.getTemplatesByUserId(currentUser.getId());
         
-        boolean hasTemplates = false;
+        // Apply filters and sort
+        List<Template> filteredTemplates = new ArrayList<>();
         
         for (Template template : templates) {
-            // Apply filter if not "All"
+            // Apply room type filter if not "All"
             if (!"All".equals(filterType) && !template.getRoomType().equals(filterType)) {
                 continue;
             }
             
+            // Apply search filter if provided
+            if (searchQuery != null && !searchQuery.isEmpty()) {
+                if (!template.getTitle().toLowerCase().contains(searchQuery.toLowerCase())) {
+                    continue;
+                }
+            }
+            
+            filteredTemplates.add(template);
+        }
+        
+        // Apply sorting
+        if (sortOrder != null) {
+            switch (sortOrder) {
+                case "Newest First":
+                    filteredTemplates.sort((t1, t2) -> 
+                        t2.getCreatedAt().compareTo(t1.getCreatedAt()));
+                    break;
+                case "Oldest First":
+                    filteredTemplates.sort((t1, t2) -> 
+                        t1.getCreatedAt().compareTo(t2.getCreatedAt()));
+                    break;
+                case "A-Z":
+                    filteredTemplates.sort((t1, t2) -> 
+                        t1.getTitle().compareToIgnoreCase(t2.getTitle()));
+                    break;
+                case "Z-A":
+                    filteredTemplates.sort((t1, t2) -> 
+                        t2.getTitle().compareToIgnoreCase(t1.getTitle()));
+                    break;
+            }
+        }
+        
+        boolean hasTemplates = false;
+        
+        for (Template template : filteredTemplates) {
             if (isGridView) {
                 targetPanel.add(createTemplateCard(template));
             } else {
                 targetPanel.add(createTemplateListItem(template));
                 // Add separator between list items except for the last one
-                if (templates.indexOf(template) < templates.size() - 1) {
+                if (filteredTemplates.indexOf(template) < filteredTemplates.size() - 1) {
                     JSeparator separator = new JSeparator();
                     separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
                     targetPanel.add(separator);
@@ -841,17 +956,42 @@ private void loadUserTemplates(JPanel targetPanel, String filterType, boolean is
             emptyIcon.setFont(new Font("Dialog", Font.PLAIN, 48));
             emptyIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
             
-            JLabel emptyLabel = new JLabel("No templates found");
+            String messageText = "No templates found";
+            if (searchQuery != null && !searchQuery.isEmpty()) {
+                messageText = "No templates match your search";
+            }
+            
+            JLabel emptyLabel = new JLabel(messageText);
             emptyLabel.setFont(new Font("Arial", Font.BOLD, 16));
             emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             
-            JLabel instructionLabel = new JLabel("Save a room layout as template to see it here");
+            JLabel instructionLabel = new JLabel("Try different search terms or create a new template");
             instructionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
             instructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             
             JButton newDesignButton = new JButton("Create New Design");
             newDesignButton.setAlignmentX(Component.CENTER_ALIGNMENT);
             newDesignButton.addActionListener(e -> cardLayout.show(contentPanel, "new-design"));
+            
+            JButton clearFiltersButton = new JButton("Clear Filters");
+            clearFiltersButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+            clearFiltersButton.addActionListener(e -> {
+                // This will be handled by the parent's refresh mechanism
+                JPanel parentPanel = (JPanel) SwingUtilities.getAncestorOfClass(JPanel.class, targetPanel);
+                if (parentPanel != null) {
+                    for (Component comp : parentPanel.getComponents()) {
+                        if (comp instanceof JComboBox) {
+                            ((JComboBox<?>) comp).setSelectedIndex(0);
+                        } else if (comp instanceof JTextField) {
+                            ((JTextField) comp).setText("");
+                        }
+                    }
+                }
+                
+                loadUserTemplates(targetPanel, "All", isGridView, "", "Newest First");
+                targetPanel.revalidate();
+                targetPanel.repaint();
+            });
             
             emptyPanel.add(Box.createVerticalGlue());
             emptyPanel.add(emptyIcon);
@@ -860,14 +1000,80 @@ private void loadUserTemplates(JPanel targetPanel, String filterType, boolean is
             emptyPanel.add(Box.createVerticalStrut(5));
             emptyPanel.add(instructionLabel);
             emptyPanel.add(Box.createVerticalStrut(20));
-            emptyPanel.add(newDesignButton);
+            
+            JPanel buttonPanel = new JPanel();
+            buttonPanel.setOpaque(false);
+            buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            buttonPanel.add(newDesignButton);
+            
+            if (searchQuery != null && !searchQuery.isEmpty() || !"All".equals(filterType)) {
+                buttonPanel.add(clearFiltersButton);
+            }
+            
+            emptyPanel.add(buttonPanel);
             emptyPanel.add(Box.createVerticalGlue());
             
             targetPanel.add(emptyPanel);
         }
         
-        // Debug info - print out number of templates found
-        System.out.println("Loaded " + templates.size() + " templates for user " + currentUser.getId());
+        // Add filter summary if filters are applied
+        boolean hasFilters = (searchQuery != null && !searchQuery.isEmpty()) || !"All".equals(filterType);
+        if (hasFilters && hasTemplates) {
+            JPanel filterSummaryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            filterSummaryPanel.setOpaque(false);
+            filterSummaryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            
+            StringBuilder summaryText = new StringBuilder("Showing templates for: ");
+            if (!"All".equals(filterType)) {
+                summaryText.append(filterType);
+            } else {
+                summaryText.append("All room types");
+            }
+            
+            if (searchQuery != null && !searchQuery.isEmpty()) {
+                summaryText.append(" containing \"").append(searchQuery).append("\"");
+            }
+            
+            JLabel summaryLabel = new JLabel(summaryText.toString());
+            summaryLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+            summaryLabel.setForeground(new Color(100, 100, 100));
+            
+            JButton clearButton = new JButton("Clear Filters");
+            clearButton.setFont(new Font("Arial", Font.PLAIN, 10));
+            clearButton.setMargin(new Insets(0, 5, 0, 5));
+            clearButton.addActionListener(e -> {
+                // This will be handled by the parent's refresh mechanism
+                JPanel parentPanel = (JPanel) SwingUtilities.getAncestorOfClass(JPanel.class, targetPanel);
+                if (parentPanel != null) {
+                    Component[] components = ((Container) parentPanel.getParent()).getComponents();
+                    for (Component comp : components) {
+                        if (comp instanceof JComboBox) {
+                            ((JComboBox<?>) comp).setSelectedIndex(0);
+                        } else if (comp instanceof JTextField) {
+                            ((JTextField) comp).setText("");
+                        }
+                    }
+                }
+                
+                loadUserTemplates(targetPanel, "All", isGridView, "", "Newest First");
+                targetPanel.revalidate();
+                targetPanel.repaint();
+            });
+            
+            filterSummaryPanel.add(summaryLabel);
+            filterSummaryPanel.add(clearButton);
+            
+            // Add at the beginning
+            if (targetPanel.getComponentCount() > 0) {
+                targetPanel.add(filterSummaryPanel, 0);
+            } else {
+                targetPanel.add(filterSummaryPanel);
+            }
+        }
+        
+        // Debug info
+        System.out.println("Loaded " + filteredTemplates.size() + " templates of " + 
+            templates.size() + " total for user " + currentUser.getId());
         
     } catch (SQLException e) {
         e.printStackTrace();
@@ -881,14 +1087,14 @@ private void loadUserTemplates(JPanel targetPanel, String filterType, boolean is
         targetPanel.add(errorPanel);
     }
     
-    // Add extra space at the bottom of the panel for better scrolling
+    // Add extra space at bottom for better scrolling
     targetPanel.add(Box.createVerticalStrut(20));
     
-    // Force revalidation to ensure layout updates
+    // Ensure layout updates
     targetPanel.revalidate();
     targetPanel.repaint();
     
-    // Make sure this panel is visible if part of a scroll pane
+    // Update JScrollPane if needed
     Container parent = targetPanel.getParent();
     if (parent instanceof JViewport) {
         parent = parent.getParent();
@@ -1020,9 +1226,8 @@ private void loadUserTemplates(JPanel targetPanel, String filterType, boolean is
                                 "Success", 
                                 JOptionPane.INFORMATION_MESSAGE);
                             
-                            // Refresh the templates panel
-                            cardLayout.show(contentPanel, "other-panel"); // Switch to any other panel temporarily
-                            cardLayout.show(contentPanel, "templates"); // Switch back to refresh
+                            // CHANGE: Instead of switching panels, directly refresh the current panel
+                            refreshTemplatesPanel();
                         } else {
                             JOptionPane.showMessageDialog(panel, 
                                 "Failed to delete template", 
