@@ -860,16 +860,20 @@ public class ThreeDViewPanel extends JPanel {
         
         // Keep all the other furniture creation methods unchanged
         private Node createCupboard(float width, float length, float height, ColorRGBA color) {
-            // Existing furniture creation code...
             Node cupboardNode = new Node("Cupboard");
             
-            // Create main body
-            Box bodyBox = new Box(width/2, height/2, length/2);
+            // For a cupboard, ensure dimensions are correct for standing orientation
+            // Height should be the largest dimension along Y-axis
+            float cupboardHeight = Math.max(height, length);
+            float cupboardDepth = (height == cupboardHeight) ? length : height;
+            
+            // Create main body with corrected dimensions
+            Box bodyBox = new Box(width/2, cupboardHeight/2, cupboardDepth/2);
             Geometry body = new Geometry("CupboardBody", bodyBox);
             Material bodyMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
             bodyMat.setColor("Color", color);
             body.setMaterial(bodyMat);
-            body.setLocalTranslation(0, height/2, 0);
+            body.setLocalTranslation(0, cupboardHeight/2, 0);
             cupboardNode.attachChild(body);
             
             // Add door lines
@@ -877,14 +881,14 @@ public class ThreeDViewPanel extends JPanel {
             lineMat.setColor("Color", ColorRGBA.DarkGray);
             
             // Vertical divider
-            Box dividerBox = new Box(0.01f, height/2, 0.01f);
+            Box dividerBox = new Box(0.01f, cupboardHeight/2, 0.01f);
             Geometry divider = new Geometry("Divider", dividerBox);
             divider.setMaterial(lineMat);
-            divider.setLocalTranslation(0, height/2, length/2 + 0.01f);
+            divider.setLocalTranslation(0, cupboardHeight/2, cupboardDepth/2 + 0.01f);
             cupboardNode.attachChild(divider);
             
             // Handles
-            float handleSize = Math.min(width, length) / 15;
+            float handleSize = Math.min(width, cupboardDepth) / 15;
             Box handleBox = new Box(handleSize/2, handleSize/2, handleSize/2);
             Material handleMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
             handleMat.setColor("Color", ColorRGBA.DarkGray);
@@ -892,13 +896,13 @@ public class ThreeDViewPanel extends JPanel {
             // Left handle
             Geometry leftHandle = new Geometry("LeftHandle", handleBox);
             leftHandle.setMaterial(handleMat);
-            leftHandle.setLocalTranslation(-width/4, height/2, length/2 + handleSize/2);
+            leftHandle.setLocalTranslation(-width/4, cupboardHeight/2, cupboardDepth/2 + handleSize/2);
             cupboardNode.attachChild(leftHandle);
             
             // Right handle
             Geometry rightHandle = new Geometry("RightHandle", handleBox);
             rightHandle.setMaterial(handleMat);
-            rightHandle.setLocalTranslation(width/4, height/2, length/2 + handleSize/2);
+            rightHandle.setLocalTranslation(width/4, cupboardHeight/2, cupboardDepth/2 + handleSize/2);
             cupboardNode.attachChild(rightHandle);
             
             return cupboardNode;
@@ -1705,13 +1709,18 @@ public class ThreeDViewPanel extends JPanel {
                     private Node createCupboard(float width, float length, float height, ColorRGBA color) {
                         Node cupboardNode = new Node("Cupboard");
                         
-                        // Create main body
-                        Box bodyBox = new Box(width/2, height/2, length/2);
+                        // For a cupboard, ensure dimensions are correct for standing orientation
+                        // Height should be the largest dimension along Y-axis
+                        float cupboardHeight = Math.max(height, length);
+                        float cupboardDepth = (height == cupboardHeight) ? length : height;
+                        
+                        // Create main body with corrected dimensions
+                        Box bodyBox = new Box(width/2, cupboardHeight/2, cupboardDepth/2);
                         Geometry body = new Geometry("CupboardBody", bodyBox);
                         Material bodyMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
                         bodyMat.setColor("Color", color);
                         body.setMaterial(bodyMat);
-                        body.setLocalTranslation(0, height/2, 0);
+                        body.setLocalTranslation(0, cupboardHeight/2, 0);
                         cupboardNode.attachChild(body);
                         
                         // Add door lines
@@ -1719,14 +1728,14 @@ public class ThreeDViewPanel extends JPanel {
                         lineMat.setColor("Color", ColorRGBA.DarkGray);
                         
                         // Vertical divider
-                        Box dividerBox = new Box(0.01f, height/2, 0.01f);
+                        Box dividerBox = new Box(0.01f, cupboardHeight/2, 0.01f);
                         Geometry divider = new Geometry("Divider", dividerBox);
                         divider.setMaterial(lineMat);
-                        divider.setLocalTranslation(0, height/2, length/2 + 0.01f);
+                        divider.setLocalTranslation(0, cupboardHeight/2, cupboardDepth/2 + 0.01f);
                         cupboardNode.attachChild(divider);
                         
                         // Handles
-                        float handleSize = Math.min(width, length) / 15;
+                        float handleSize = Math.min(width, cupboardDepth) / 15;
                         Box handleBox = new Box(handleSize/2, handleSize/2, handleSize/2);
                         Material handleMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
                         handleMat.setColor("Color", ColorRGBA.DarkGray);
@@ -1734,13 +1743,13 @@ public class ThreeDViewPanel extends JPanel {
                         // Left handle
                         Geometry leftHandle = new Geometry("LeftHandle", handleBox);
                         leftHandle.setMaterial(handleMat);
-                        leftHandle.setLocalTranslation(-width/4, height/2, length/2 + handleSize/2);
+                        leftHandle.setLocalTranslation(-width/4, cupboardHeight/2, cupboardDepth/2 + handleSize/2);
                         cupboardNode.attachChild(leftHandle);
                         
                         // Right handle
                         Geometry rightHandle = new Geometry("RightHandle", handleBox);
                         rightHandle.setMaterial(handleMat);
-                        rightHandle.setLocalTranslation(width/4, height/2, length/2 + handleSize/2);
+                        rightHandle.setLocalTranslation(width/4, cupboardHeight/2, cupboardDepth/2 + handleSize/2);
                         cupboardNode.attachChild(rightHandle);
                         
                         return cupboardNode;
@@ -1927,4 +1936,4 @@ public class ThreeDViewPanel extends JPanel {
                 }
             }
             
-       
+                  
