@@ -1191,6 +1191,9 @@ public class TwoDViewPanel extends JPanel {
                             "Success", 
                             JOptionPane.INFORMATION_MESSAGE);
                         dialog.dispose();
+                        
+                        // NEW CODE: Find the parent DesignerDashboardPanel and refresh templates
+                        refreshTemplatesPanel();
                     } else {
                         JOptionPane.showMessageDialog(dialog, 
                             "Failed to save template", 
@@ -1225,6 +1228,26 @@ public class TwoDViewPanel extends JPanel {
                 "Error", 
                 JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
+        }
+    }
+    
+    // Add this new method to refresh the templates panel
+    private void refreshTemplatesPanel() {
+        // Find the parent DesignerDashboardPanel in the component hierarchy
+        Container parent = getParent();
+        while (parent != null && !(parent instanceof DesignerDashboardPanel)) {
+            parent = parent.getParent();
+        }
+        
+        // If we found the DesignerDashboardPanel, refresh the templates
+        if (parent instanceof DesignerDashboardPanel) {
+            DesignerDashboardPanel dashboard = (DesignerDashboardPanel) parent;
+            dashboard.refreshTemplatesPanel();
+            
+            // Switch to templates panel to show the newly created template
+            dashboard.showTemplatesPanel();
+        } else {
+            System.out.println("Could not find parent DesignerDashboardPanel to refresh templates");
         }
     }
 }
