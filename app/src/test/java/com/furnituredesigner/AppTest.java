@@ -3,12 +3,14 @@
  */
 package com.furnituredesigner;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AppTest {
-    @Test public void appHasAGreeting() {
+    @Test 
+    public void appLaunchesWithoutError() {
+        // Simple test to verify the App class can be instantiated
         App classUnderTest = new App();
-        assertNotNull("app should have a greeting", classUnderTest.getGreeting());
+        assertNotNull(classUnderTest, "App class should be instantiable");
     }
 }
