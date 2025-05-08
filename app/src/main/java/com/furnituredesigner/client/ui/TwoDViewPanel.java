@@ -3,6 +3,17 @@ package com.furnituredesigner.client.ui;
 import com.furnituredesigner.common.model.Room;
 import com.furnituredesigner.common.model.Furniture;
 import com.furnituredesigner.server.service.FurnitureService;
+import com.furnituredesigner.server.service.TemplateService;
+import com.furnituredesigner.common.model.Template;
+import java.util.Date;
+import java.util.Date;
+import com.furnituredesigner.common.model.Template;
+import com.furnituredesigner.server.service.TemplateService;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Window;
+
+
 
 import javax.swing.*;
 import java.awt.*;
@@ -103,9 +114,10 @@ public class TwoDViewPanel extends JPanel {
         JButton zoomInButton = new JButton("+");
         JButton zoomOutButton = new JButton("-");
         JButton resetViewButton = new JButton("Reset View");
-        JButton saveFurnitureButton = new JButton("Save Layout");
-        JButton threeDViewButton = new JButton("3D Preview");  // Add 3D Preview button
+        JButton saveAsTemplateButton = new JButton("Save as Template");  // Changed from saveFurnitureButton
+        JButton threeDViewButton = new JButton("3D Preview");
         
+        // Button action listeners
         zoomInButton.addActionListener(e -> {
             scale *= 1.2;
             drawingPanel.repaint();
@@ -122,11 +134,11 @@ public class TwoDViewPanel extends JPanel {
             drawingPanel.repaint();
         });
         
-        saveFurnitureButton.addActionListener(e -> {
-            saveFurnitureLayout();
+        // Update this listener to call the saveAsTemplate method
+        saveAsTemplateButton.addActionListener(e -> {
+            saveAsTemplate();
         });
         
-        // Add action listener for 3D Preview button
         threeDViewButton.addActionListener(e -> {
             showThreeDPreview();
         });
@@ -134,8 +146,8 @@ public class TwoDViewPanel extends JPanel {
         controlPanel.add(zoomInButton);
         controlPanel.add(zoomOutButton);
         controlPanel.add(resetViewButton);
-        controlPanel.add(saveFurnitureButton);
-        controlPanel.add(threeDViewButton);  // Add the button to the control panel
+        controlPanel.add(saveAsTemplateButton);
+        controlPanel.add(threeDViewButton);
         
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(controlPanel, BorderLayout.EAST);
@@ -1070,6 +1082,172 @@ public class TwoDViewPanel extends JPanel {
                 "Error", 
                 JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
+        }
+    }
+    
+    private void saveAsTemplate() {
+        try {
+            // First save the furniture layout
+            saveFurnitureLayout();
+            
+            // Show dialog to enter template details
+            Window owner = SwingUtilities.getWindowAncestor(this);
+            JDialog dialog;
+            if (owner instanceof Frame) {
+                dialog = new JDialog((Frame) owner, "Save as Template", true);
+            } else if (owner instanceof Dialog) {
+                dialog = new JDialog((Dialog) owner, "Save as Template", true);
+            } else {
+                dialog = new JDialog();
+                dialog.setTitle("Save as Template");
+                dialog.setModal(true);
+            }
+            dialog.setLayout(new BorderLayout());
+            
+            JPanel panel = new JPanel(new GridBagLayout());
+            panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+            
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.insets = new Insets(5, 5, 5, 5);
+            
+            // Template title
+            panel.add(new JLabel("Template Title:"), gbc);
+            gbc.gridx = 1;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.weightx = 1.0;
+            JTextField titleField = new JTextField(20);
+            titleField.setText(room.getName());
+            panel.add(titleField, gbc);
+            
+            // Room type field
+            gbc.gridx = 0;
+            gbc.gridy = 1;
+            gbc.weightx = 0;
+            panel.add(new JLabel("Room Type:"), gbc);
+            
+            gbc.gridx = 1;
+            JComboBox<String> roomTypeCombo = new JComboBox<>(new String[] {
+                "Living Room", "Bedroom", "Kitchen", "Bathroom", "Office", "Dining Room", "Other"
+            });
+            panel.add(roomTypeCombo, gbc);
+            
+            // Comments
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            panel.add(new JLabel("Comments:"), gbc);
+            
+            gbc.gridx = 1;
+            JTextArea commentsArea = new JTextArea(5, 20);
+            commentsArea.setLineWrap(true);
+            commentsArea.setWrapStyleWord(true);
+            JScrollPane scrollPane = new JScrollPane(commentsArea);
+            panel.add(scrollPane, gbc);
+            
+            // Buttons
+            gbc.gridx = 0;
+            gbc.gridy = 3;
+            gbc.gridwidth = 2;
+            gbc.anchor = GridBagConstraints.CENTER;
+            
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton cancelButton = new JButton("Cancel");
+            JButton saveButton = new JButton("Save Template");
+            
+            cancelButton.addActionListener(evt -> dialog.dispose());
+            
+            saveButton.addActionListener(evt -> {
+                String title = titleField.getText().trim();
+                String roomType = (String) roomTypeCombo.getSelectedItem();
+                String comments = commentsArea.getText().trim();
+                
+                if (title.isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog, 
+                        "Please enter a template title", 
+                        "Validation Error", 
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                try {
+                    // Create template object
+                    Template template = new Template();
+                    template.setTitle(title);
+                    template.setComments(comments);
+                    template.setRoomId(room.getId());
+                    template.setUserId(room.getUserId());
+                    template.setRoomType(roomType);
+                    template.setCreatedAt(new Date());
+                    
+                    // Save template
+                    TemplateService templateService = new TemplateService();
+                    Template savedTemplate = templateService.saveTemplate(template);
+                    
+                    if (savedTemplate != null) {
+                        JOptionPane.showMessageDialog(dialog, 
+                            "Template saved successfully!", 
+                            "Success", 
+                            JOptionPane.INFORMATION_MESSAGE);
+                        dialog.dispose();
+                        
+                        // NEW CODE: Find the parent DesignerDashboardPanel and refresh templates
+                        refreshTemplatesPanel();
+                    } else {
+                        JOptionPane.showMessageDialog(dialog, 
+                            "Failed to save template", 
+                            "Error", 
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(dialog, 
+                        "Database error: " + ex.getMessage(), 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                }
+            });
+            
+            buttonPanel.add(cancelButton);
+            buttonPanel.add(saveButton);
+            
+            gbc.gridx = 0;
+            gbc.gridy = 3;
+            gbc.gridwidth = 2;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            panel.add(buttonPanel, gbc);
+            
+            dialog.add(panel, BorderLayout.CENTER);
+            dialog.pack();
+            dialog.setLocationRelativeTo(this);
+            dialog.setVisible(true);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Error saving template: " + ex.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+    
+    // Add this new method to refresh the templates panel
+    private void refreshTemplatesPanel() {
+        // Find the parent DesignerDashboardPanel in the component hierarchy
+        Container parent = getParent();
+        while (parent != null && !(parent instanceof DesignerDashboardPanel)) {
+            parent = parent.getParent();
+        }
+        
+        // If we found the DesignerDashboardPanel, refresh the templates
+        if (parent instanceof DesignerDashboardPanel) {
+            DesignerDashboardPanel dashboard = (DesignerDashboardPanel) parent;
+            dashboard.refreshTemplatesPanel();
+            
+            // Switch to templates panel to show the newly created template
+            dashboard.showTemplatesPanel();
+        } else {
+            System.out.println("Could not find parent DesignerDashboardPanel to refresh templates");
         }
     }
 }
