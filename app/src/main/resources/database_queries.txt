@@ -1,0 +1,189 @@
+-- SQLite Database Queries for Furniture Designer App
+-- ===================================================
+
+-- Connect to the database
+-- Run: sqlite3 database/furniture_designer.db
+.mode column
+.headers on
+SELECT * FROM rooms;
+
+
+-- Set display format
+.mode column
+.headers on
+
+-- ===================================================
+-- USERS TABLE
+-- ===================================================
+
+-- View users table schema
+.echo on
+.echo "USERS TABLE SCHEMA:"
+PRAGMA table_info(users);
+.echo off
+
+-- View all users data
+.echo on
+.echo "USERS TABLE DATA:"
+SELECT * FROM users;
+.echo off
+
+-- Count users
+.echo on
+.echo "USERS COUNT:"
+SELECT COUNT(*) as user_count FROM users;
+.echo off
+
+-- Count users by role
+.echo on
+.echo "USERS BY ROLE:"
+SELECT role, COUNT(*) as count FROM users GROUP BY role;
+.echo off
+
+-- ===================================================
+-- ROOMS TABLE
+-- ===================================================
+
+-- View rooms table schema
+.echo on
+.echo "ROOMS TABLE SCHEMA:"
+PRAGMA table_info(rooms);
+.echo off
+
+-- View all rooms data
+.echo on
+.echo "ROOMS TABLE DATA:"
+SELECT * FROM rooms;
+.echo off
+
+-- Count rooms
+.echo on
+.echo "ROOMS COUNT:"
+SELECT COUNT(*) as room_count FROM rooms;
+.echo off
+
+-- Rooms with user information
+.echo on
+.echo "ROOMS WITH OWNER INFORMATION:"
+SELECT r.id, r.name, r.width, r.length, r.height, r.shape, u.username, u.full_name 
+FROM rooms r JOIN users u ON r.user_id = u.id;
+.echo off
+
+-- ===================================================
+-- FURNITURE TABLE
+-- ===================================================
+
+-- View furniture table schema
+.echo on
+.echo "FURNITURE TABLE SCHEMA:"
+PRAGMA table_info(furniture);
+.echo off
+
+-- View all furniture data
+.echo on
+.echo "FURNITURE TABLE DATA:"
+SELECT * FROM furniture;
+.echo off
+
+-- Count furniture
+.echo on
+.echo "FURNITURE COUNT:"
+SELECT COUNT(*) as furniture_count FROM furniture;
+.echo off
+
+-- Furniture with room information
+.echo on
+.echo "FURNITURE WITH ROOM INFORMATION:"
+SELECT f.id, f.type, f.x_pos, f.y_pos, f.width, f.length, f.height, f.color, r.name as room_name 
+FROM furniture f JOIN rooms r ON f.room_id = r.id;
+.echo off
+
+-- Count furniture by type
+.echo on
+.echo "FURNITURE BY TYPE:"
+SELECT type, COUNT(*) as count FROM furniture GROUP BY type;
+.echo off
+
+-- ===================================================
+-- DESIGNS TABLE
+-- ===================================================
+
+-- View designs table schema
+.echo on
+.echo "DESIGNS TABLE SCHEMA:"
+PRAGMA table_info(designs);
+.echo off
+
+-- View all designs data
+.echo on
+.echo "DESIGNS TABLE DATA:"
+SELECT * FROM designs;
+.echo off
+
+-- Count designs
+.echo on
+.echo "DESIGNS COUNT:"
+SELECT COUNT(*) as design_count FROM designs;
+.echo off
+
+-- Designs with user and room information
+.echo on
+.echo "DESIGNS WITH USER AND ROOM INFORMATION:"
+SELECT d.id, d.name, d.description, r.name as room_name, u.username, u.full_name
+FROM designs d 
+JOIN rooms r ON d.room_id = r.id
+JOIN users u ON d.user_id = u.id;
+.echo off
+
+-- ===================================================
+-- TEMPLATES TABLE
+-- ===================================================
+
+-- View templates table schema
+.echo on
+.echo "TEMPLATES TABLE SCHEMA:"
+PRAGMA table_info(templates);
+.echo off
+
+-- View all templates data
+.echo on
+.echo "TEMPLATES TABLE DATA:"
+SELECT * FROM templates;
+.echo off
+
+-- Count templates
+.echo on
+.echo "TEMPLATES COUNT:"
+SELECT COUNT(*) as template_count FROM templates;
+.echo off
+
+-- Templates with user and room information
+.echo on
+.echo "TEMPLATES WITH USER AND ROOM INFORMATION:"
+SELECT t.id, t.title, t.comments, t.room_type, r.name as room_name, u.username, u.full_name
+FROM templates t
+LEFT JOIN rooms r ON t.room_id = r.id
+JOIN users u ON t.user_id = u.id;
+.echo off
+
+-- ===================================================
+-- DATABASE SUMMARY
+-- ===================================================
+
+.echo on
+.echo "DATABASE TABLES SUMMARY:"
+SELECT 'Users' as Table_Name, COUNT(*) as Count FROM users
+UNION ALL
+SELECT 'Rooms', COUNT(*) FROM rooms
+UNION ALL
+SELECT 'Furniture', COUNT(*) FROM furniture
+UNION ALL
+SELECT 'Designs', COUNT(*) FROM designs
+UNION ALL
+SELECT 'Templates', COUNT(*) FROM templates;
+.echo off
+
+-- ===================================================
+-- Exit SQLite
+-- .exit
+-- ===================================================
